@@ -1,1 +1,93 @@
-.
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#faf9f7">
+  <meta name="description" content="Portafolio de Gabriela Monzú, artista de cerámica.">
+  <title>Gabriela Monzú | Portafolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11.2.10/swiper-bundle.min.css">
+  <link rel="stylesheet" href="./index.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/swiper@11.2.10/swiper-bundle.min.js"></script>
+  <script type="module" src="./index.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#contenido">Saltar al contenido</a>
+  <noscript><p class="page-width">Activa JavaScript para explorar el portafolio y sus imágenes.</p></noscript>
+  <div id="site-header"></div>
+  <main id="contenido">
+    <section class="intro page-width" aria-labelledby="intro-title">
+      <div>
+        <p class="eyebrow"><span class="eyebrow-line"></span> PORTAFOLIO DE ARTE</p>
+        <h1 id="intro-title">Obras <em>seleccionadas.</em></h1>
+      </div>
+      <p class="intro-note">Cerámica y arte visual<br><span>Gabriela Monzú</span></p>
+    </section>
+
+    <section class="feature-section page-width" aria-labelledby="selection-one-title">
+      <div class="section-heading">
+        <div class="heading-copy">
+          <span class="section-number">01 / SELECCIÓN</span>
+          <h2 id="selection-one-title">Una mirada a la obra</h2>
+        </div>
+        <a class="text-link" href="./galeria.html">Ver todo <span aria-hidden="true">↗</span></a>
+      </div>
+      <div class="carousel-shell" data-carousel="1">
+        <div class="swiper work-swiper">
+          <div class="swiper-wrapper"></div>
+        </div>
+        <button class="carousel-arrow carousel-previous" type="button" aria-label="Obra anterior">
+          <span aria-hidden="true">←</span>
+        </button>
+        <button class="carousel-arrow carousel-next" type="button" aria-label="Obra siguiente">
+          <span aria-hidden="true">→</span>
+        </button>
+      </div>
+      <div class="carousel-caption"><span data-carousel-caption></span><span data-carousel-count></span></div>
+      <p class="status-message" data-carousel-status role="status"></p>
+    </section>
+
+    <section class="feature-section page-width" aria-labelledby="selection-two-title">
+      <div class="section-heading">
+        <div class="heading-copy">
+          <span class="section-number">02 / SELECCIÓN</span>
+          <h2 id="selection-two-title">Formas y detalles</h2>
+        </div>
+        <a class="text-link" href="./galeria.html">Ver todo <span aria-hidden="true">↗</span></a>
+      </div>
+      <div class="carousel-shell" data-carousel="2">
+        <div class="swiper work-swiper">
+          <div class="swiper-wrapper"></div>
+        </div>
+        <button class="carousel-arrow carousel-previous" type="button" aria-label="Obra anterior">
+          <span aria-hidden="true">←</span>
+        </button>
+        <button class="carousel-arrow carousel-next" type="button" aria-label="Obra siguiente">
+          <span aria-hidden="true">→</span>
+        </button>
+      </div>
+      <div class="carousel-caption"><span data-carousel-caption></span><span data-carousel-count></span></div>
+      <p class="status-message" data-carousel-status role="status"></p>
+    </section>
+
+    <section class="gallery-section page-width" aria-labelledby="gallery-preview-title">
+      <div class="gallery-heading">
+        <div>
+          <p class="eyebrow"><span class="eyebrow-line"></span> EXPLORAR</p>
+          <h2 id="gallery-preview-title">La <em>galería.</em></h2>
+          <p class="section-description">Una selección de obras y sus detalles.</p>
+        </div>
+        <div data-grid-control></div>
+      </div>
+      <div id="gallery-preview" class="masonry" aria-label="Vista previa de la galería"></div>
+      <p id="gallery-preview-status" class="status-message" role="status"></p>
+      <div class="more-wrap"><a class="outline-button" href="./galeria.html">Ver más <span aria-hidden="true">↗</span></a></div>
+    </section>
+  </main>
+  <div id="site-footer"></div>
+  <dialog id="artwork-dialog" class="artwork-dialog" aria-labelledby="artwork-dialog-title"></dialog>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#faf9f7">
+  <meta name="description" content="Galería de obras de Gabriela Monzú.">
+  <title>Galería | Gabriela Monzú</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./index.css">
+  <script type="module" src="./gallery-page.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#contenido">Saltar al contenido</a>
+  <noscript><p class="page-width">Activa JavaScript para explorar la galería.</p></noscript>
+  <div id="site-header"></div>
+  <main id="contenido" class="page-width">
+    <div class="gallery-page-heading">
+      <p class="eyebrow"><span class="eyebrow-line"></span> PORTAFOLIO</p>
+      <h1>La <em>galería.</em></h1>
+      <p class="section-description">Obras, formas y detalles.</p>
+    </div>
+    <div class="gallery-toolbar">
+      <div id="category-filters" class="category-filters" role="group" aria-label="Filtrar por categoría"></div>
+      <div data-grid-control></div>
+    </div>
+    <div id="gallery" class="masonry" aria-label="Galería de obras"></div>
+    <p id="gallery-status" class="status-message" role="status"></p>
+    <div class="more-wrap gallery-load-more" id="gallery-more-wrap" hidden>
+      <button id="gallery-more" class="outline-button" type="button">Cargar más <span aria-hidden="true">↓</span></button>
+    </div>
+    <div id="gallery-sentinel" aria-hidden="true"></div>
+    <div class="more-wrap" style="margin-bottom: clamp(80px, 10vw, 150px)">
+      <a class="text-link" href="./index.html">← Volver a Inicio</a>
+    </div>
+  </main>
+  <div id="site-footer"></div>
+  <dialog id="artwork-dialog" class="artwork-dialog" aria-labelledby="artwork-dialog-title"></dialog>
+</body>
+</html>
