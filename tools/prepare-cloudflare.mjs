@@ -2,17 +2,21 @@ import { copyFile, lstat, mkdir, mkdtemp, readFile, realpath, writeFile } from '
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { demoWorks } from '../catalog.js';
+import { siteConfig } from '../site-config.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const outputParent = path.resolve(process.argv[2] || path.join(root, '.cloudflare-build'));
 const files = [
   'index.html', 'index.css', 'index.js', 'galeria.html', 'gallery.js', 'gallery-page.js',
+  'obra.html', 'obra.js', 'gallery-navigation.js',
   'catalog.js', 'site.js', 'site-config.js', 'supabase-catalog.js',
-  path.join('Guía', 'administracion', 'admin.html'),
-  path.join('Guía', 'administracion', 'admin.css'),
-  path.join('Guía', 'administracion', 'admin.js'),
+  path.join('administracion', 'admin.html'),
+  path.join('administracion', 'admin.css'),
+  path.join('administracion', 'admin.js'),
   path.join('Supabase Connection', 'supabaseClient.js'),
-  ...demoWorks.flatMap((work) => work.images.map((image) => path.relative(root, fileURLToPath(image.src)))),
+  ...(siteConfig.catalogSource === 'demo'
+    ? demoWorks.flatMap((work) => work.images.map((image) => path.relative(root, fileURLToPath(image.src))))
+    : []),
 ];
 
 try {

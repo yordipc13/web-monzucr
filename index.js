@@ -1,20 +1,19 @@
-import { getFeaturedWorks } from './catalog.js';
+import { getFeaturedWorks, makeFeaturedSlides } from './catalog.js';
 import { renderPreview } from './gallery.js';
-import { createImage, initializeGridControls, initializeSite, showArtwork } from './site.js';
+import { artworkUrl, createImage, initializeGridControls, initializeSite } from './site.js';
 
-function createSlide(work) {
+function createSlide(photos) {
   const slide = document.createElement('div');
   slide.className = 'swiper-slide';
   const pair = document.createElement('div');
   pair.className = 'carousel-pair';
-  work.images.slice(0, 2).forEach((photo, index) => {
-    const button = document.createElement('button');
-    button.type = 'button';
+  photos.forEach(({ work, photo, index }) => {
+    const button = document.createElement('a');
+    button.href = artworkUrl(work.id, index, null, 'home');
     button.className = 'carousel-photo';
     button.setAttribute('aria-label', `Ver detalles de ${work.name}, fotografía ${index + 1}`);
     const image = createImage(photo, work, index);
     button.append(image);
-    button.addEventListener('click', () => showArtwork(work));
     pair.append(button);
   });
   slide.append(pair);
@@ -33,24 +32,26 @@ async function initializeCarousel(slot) {
   const next = shell.querySelector('.carousel-next');
   status.textContent = 'Cargando obras…';
   try {
-    const works = (await getFeaturedWorks(slot)).filter((work) => work.images.length >= 2);
-    if (!works.length) {
+    const slides = makeFeaturedSlides(await getFeaturedWorks(slot));
+    if (!slides.length) {
+      slider.setAttribute('aria-busy', 'false');
       status.textContent = 'Todavía no hay obras destacadas en esta selección.';
       previous.hidden = true;
       next.hidden = true;
       return;
     }
-    wrapper.replaceChildren(...works.map(createSlide));
+    wrapper.replaceChildren(...slides.map(createSlide));
+    slider.setAttribute('aria-busy', 'false');
     const firstImages = wrapper.querySelectorAll('.swiper-slide:first-child img');
     firstImages.forEach((image) => { image.loading = 'eager'; });
     const updateCaption = (index) => {
-      caption.textContent = works[index].name;
-      count.textContent = `${String(index + 1).padStart(2, '0')} / ${String(works.length).padStart(2, '0')}`;
+      caption.textContent = [...new Set(slides[index].map(({ work }) => work.name))].join(' / ');
+      count.textContent = `${String(index + 1).padStart(2, '0')} / ${String(slides.length).padStart(2, '0')}`;
     };
     updateCaption(0);
     status.textContent = '';
-    previous.hidden = works.length < 2;
-    next.hidden = works.length < 2;
+    previous.hidden = slides.length < 2;
+    next.hidden = slides.length < 2;
 
     if (window.Swiper) {
       new window.Swiper(slider, {
@@ -71,12 +72,13 @@ async function initializeCarousel(slot) {
       previous.addEventListener('click', () => goTo(-1));
       next.addEventListener('click', () => goTo(1));
       wrapper.addEventListener('scroll', () => {
-        const index = Math.min(works.length - 1, Math.round(wrapper.scrollLeft / wrapper.clientWidth));
+        const index = Math.min(slides.length - 1, Math.round(wrapper.scrollLeft / wrapper.clientWidth));
         updateCaption(index);
       }, { passive: true });
     }
   } catch (error) {
     console.error('No se pudo cargar el carrusel.', error);
+    slider.setAttribute('aria-busy', 'false');
     status.textContent = 'No se pudieron cargar las obras de esta selección.';
     previous.hidden = true;
     next.hidden = true;

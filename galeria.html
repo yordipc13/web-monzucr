@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#faf9f7">
   <meta name="description" content="Galería de obras de Gabriela Monzú.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Gabriela Monzú">
+  <meta property="og:title" content="Galería | Gabriela Monzú">
+  <meta property="og:description" content="Obras, formas y detalles del portafolio.">
+  <meta property="og:url" content="./galeria.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Galería | Gabriela Monzú">
+  <meta name="twitter:description" content="Obras, formas y detalles del portafolio.">
   <title>Galería | Gabriela Monzú</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,7 +34,9 @@
       <div id="category-filters" class="category-filters" role="group" aria-label="Filtrar por categoría"></div>
       <div data-grid-control></div>
     </div>
-    <div id="gallery" class="masonry" aria-label="Galería de obras"></div>
+    <div id="gallery" class="masonry" aria-label="Galería de obras" aria-busy="true">
+      <div class="gallery-skeleton"></div><div class="gallery-skeleton"></div><div class="gallery-skeleton"></div><div class="gallery-skeleton"></div><div class="gallery-skeleton"></div><div class="gallery-skeleton"></div>
+    </div>
     <p id="gallery-status" class="status-message" role="status"></p>
     <div class="more-wrap gallery-load-more" id="gallery-more-wrap" hidden>
       <button id="gallery-more" class="outline-button" type="button">Cargar más <span aria-hidden="true">↓</span></button>
@@ -37,6 +47,5 @@
     </div>
   </main>
   <div id="site-footer"></div>
-  <dialog id="artwork-dialog" class="artwork-dialog" aria-labelledby="artwork-dialog-title"></dialog>
 </body>
 </html>

@@ -10,12 +10,12 @@ La pagina debe servirse mediante HTTP o HTTPS para que el navegador pueda cargar
 
 La publishable key esta pensada para uso en el navegador. Los permisos y la proteccion de los datos deben configurarse en Supabase mediante Row Level Security (RLS) y politicas por tabla. Nunca se debe colocar una `service_role` key en codigo de cliente.
 
-Las categorías y la aplicación del esquema y las políticas de Monzú quedan pendientes.
+El esquema y las políticas de Monzú se aplicaron al proyecto remoto el 2026-11-06. Las tablas están creadas y se importaron las fotografías de instalaciones.
 
-## Preparación propuesta
+## Estado remoto
 
-`schema.sql` contiene una propuesta de tablas para obras, categorías, fotografías, destacados y administradores, además de políticas RLS y un bucket privado. No se ha ejecutado. Antes de aplicarlo, revisar su contenido, los nombres y los recursos existentes del proyecto; también hay que verificar que ninguna política previa permita acceso adicional al bucket privado. Probar explícitamente los permisos con usuarios anónimos, usuarios autenticados sin privilegios y administradores.
+`schema.sql` se aplicó después de confirmar que sus tablas, funciones y bucket no existían. Se verificaron la RPC `public.monzu_is_admin()`, la autorización de una cuenta confirmada y el bucket privado `monzu-artwork-images`. El proveedor Email está habilitado y Supabase requiere confirmar el correo antes del primer inicio de sesión.
 
-Después de crear un usuario en Supabase Auth, un administrador del proyecto debe añadir su UUID a `public.monzu_admins` mediante una operación autorizada desde el panel de Supabase. No se deben incluir contraseñas ni claves privadas en este repositorio. Las categorías se incorporarán cuando estén definidas.
+La cuenta administradora ya está registrada en `public.monzu_admins`. Para autorizar otras cuentas, añade su UUID de Auth mediante una operación autorizada desde el panel de Supabase. No incluyas contraseñas ni claves privadas en este repositorio. El esquema SQL no es idempotente: no vuelvas a ejecutar el archivo completo; prepara una migración específica para cambios futuros.
 
-El sitio usa temporalmente `catalogSource: 'demo'` en `site-config.js`. Cambiarlo a `'supabase'` solo después de aplicar y comprobar el esquema, configurar un administrador y disponer de las categorías y obras correspondientes. El bucket es privado: cada fotografía se descarga bajo las políticas de acceso, sin enlaces públicos persistentes. Las políticas deben impedir el acceso público a los borradores. La administración está en `Guía\administracion\admin.html`.
+El sitio usa `catalogSource: 'supabase'` en `site-config.js`. El bucket es privado: cada fotografía se descarga bajo las políticas de acceso, sin enlaces públicos persistentes. Las políticas impiden el acceso público a los borradores. La administración está en `administracion\admin.html`: requiere una cuenta autorizada y categorías existentes para publicar; las obras ocultas se guardan como borradores. La categoría «Instalaciones» contiene 23 obras de una fotografía, importadas sin descripciones.

@@ -1,9 +1,9 @@
 import { getCategories, getGalleryPage } from './catalog.js';
-import { createImage, notify, showArtwork } from './site.js';
+import { artworkUrl, createImage, notify } from './site.js';
 
-function createGalleryItem({ work, photo, photoIndex }) {
-  const button = document.createElement('button');
-  button.type = 'button';
+function createGalleryItem({ work, photo, photoIndex }, categoryId = null, source = 'gallery') {
+  const button = document.createElement('a');
+  button.href = artworkUrl(work.id, photoIndex, categoryId, source);
   button.className = 'gallery-item';
   button.setAttribute('aria-label', `Ver detalles de ${work.name}, fotografía ${photoIndex + 1}`);
 
@@ -15,7 +15,6 @@ function createGalleryItem({ work, photo, photoIndex }) {
   title.textContent = work.name;
   wrap.append(image, title);
   button.append(wrap);
-  button.addEventListener('click', () => showArtwork(work));
   return button;
 }
 
@@ -25,8 +24,10 @@ export async function renderPreview() {
   status.textContent = 'Cargando obras…';
   try {
     const { items } = await getGalleryPage({ limit: 24 });
-    gallery.replaceChildren(...items.map(createGalleryItem));
+    gallery.replaceChildren(...items.map((item) => createGalleryItem(item, null, 'home')));
+    gallery.setAttribute('aria-busy', 'false');
     status.textContent = items.length ? '' : 'Todavía no hay obras para mostrar.';
+    gallery.setAttribute('aria-busy', 'false');
   } catch (error) {
     console.error('No se pudo cargar la vista previa de la galería.', error);
     status.textContent = 'No se pudo cargar la galería. Inténtalo de nuevo más tarde.';
@@ -41,7 +42,7 @@ export async function initializeGalleryPage() {
   const moreButton = document.getElementById('gallery-more');
   const sentinel = document.getElementById('gallery-sentinel');
   let offset = 0;
-  let categoryId = null;
+  let categoryId = new URL(window.location.href).searchParams.get('category') || null;
   let hasMore = true;
   let loading = false;
   let generation = 0;
@@ -57,7 +58,10 @@ export async function initializeGalleryPage() {
       const page = await getGalleryPage({ offset, limit: 12, categoryId });
       if (requestGeneration !== generation) return;
       if (page.hasMore && !page.items.length) throw new Error('La fuente devolvió una página vacía con más resultados pendientes.');
-      gallery.append(...page.items.map(createGalleryItem));
+      const pageItems = page.items.map((item) => createGalleryItem(item, categoryId));
+      if (offset === 0) gallery.replaceChildren(...pageItems);
+      else gallery.append(...pageItems);
+      gallery.setAttribute('aria-busy', 'false');
       offset += page.items.length;
       hasMore = page.hasMore;
       moreWrap.hidden = !hasMore;
@@ -82,6 +86,10 @@ export async function initializeGalleryPage() {
 
   function chooseCategory(id) {
     categoryId = id;
+    const url = new URL(window.location.href);
+    if (id) url.searchParams.set('category', id);
+    else url.searchParams.delete('category');
+    history.replaceState(history.state, '', url);
     generation += 1;
     offset = 0;
     hasMore = true;

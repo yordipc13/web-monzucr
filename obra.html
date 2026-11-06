@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#faf9f7">
+  <meta name="description" content="Fotografía del portafolio de Gabriela Monzú.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Gabriela Monzú">
+  <meta property="og:title" content="Obra | Gabriela Monzú">
+  <meta property="og:description" content="Fotografía del portafolio de Gabriela Monzú.">
+  <meta property="og:url" content="./obra.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Obra | Gabriela Monzú">
+  <meta name="twitter:description" content="Fotografía del portafolio de Gabriela Monzú.">
+  <title>Obra | Gabriela Monzú</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./index.css">
+  <script type="module" src="./obra.js"></script>
+</head>
+<body class="detail-page">
+  <header class="detail-header">
+    <a id="detail-back" class="detail-back" href="./galeria.html">← <span>Volver a la galería</span></a>
+    <div class="detail-heading">
+      <p class="detail-kicker">GABRIELA MONZÚ / PORTAFOLIO</p>
+      <h1 id="detail-title">Fotografía</h1>
+    </div>
+    <a class="detail-brand" href="./index.html" aria-label="Gabriela Monzú, inicio">GM<span>.</span></a>
+  </header>
+  <main>
+    <p id="site-notice" class="detail-notice" role="status" aria-live="polite"></p>
+    <p id="detail-status" class="detail-notice" role="status" aria-live="polite">Cargando fotografía…</p>
+    <div class="detail-stage" aria-busy="true">
+      <div class="detail-skeleton" aria-hidden="true"></div>
+      <div id="detail-track" class="detail-track"></div>
+      <button id="detail-previous" class="detail-arrow detail-previous" type="button" aria-label="Fotografía anterior" disabled>←</button>
+      <button id="detail-next" class="detail-arrow detail-next" type="button" aria-label="Fotografía siguiente" disabled>→</button>
+    </div>
+    <section id="detail-info" class="detail-info" aria-label="Detalles de la obra" hidden>
+      <div><p class="eyebrow"><span class="eyebrow-line"></span> DETALLES DE LA OBRA</p><p id="detail-category" class="detail-category"></p></div>
+      <p id="detail-description" class="detail-description"></p>
+    </section>
+  </main>
+  <noscript><p class="detail-notice">Activa JavaScript para ver la fotografía.</p></noscript>
+</body>
+</html>

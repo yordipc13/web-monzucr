@@ -41,6 +41,29 @@ export async function getFeaturedWorks(slot) {
   return (await getRemoteCatalog()).getFeaturedWorks(slot);
 }
 
+export function makeFeaturedSlides(works) {
+  const slides = [];
+  let single = null;
+  for (const work of works) {
+    if (!work.images.length) continue;
+    const photos = work.images.slice(0, 2).map((photo, index) => ({ work, photo, index }));
+    if (photos.length === 2) {
+      if (single) {
+        slides.push([single]);
+        single = null;
+      }
+      slides.push(photos);
+    } else if (single) {
+      slides.push([single, photos[0]]);
+      single = null;
+    } else {
+      single = photos[0];
+    }
+  }
+  if (single) slides.push([single]);
+  return slides;
+}
+
 export async function getCategories() {
   if (siteConfig.catalogSource === 'demo') return [];
   return (await getRemoteCatalog()).getCategories();

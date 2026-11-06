@@ -5,6 +5,8 @@ import { spawnSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { demoWorks } from '../catalog.js';
+import { siteConfig } from '../site-config.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -33,11 +35,16 @@ test('la preparación de Cloudflare copia únicamente los archivos previstos', a
     const config = JSON.parse(await readFile(path.join(build, 'wrangler.jsonc'), 'utf8'));
     assert.equal(config.assets.directory, './public');
     const files = await listFiles(path.join(build, 'public'));
-    assert.equal(files.length, 34);
+    const demoCount = siteConfig.catalogSource === 'demo'
+      ? demoWorks.reduce((count, work) => count + work.images.length, 0) : 0;
+    assert.equal(files.length, 17 + demoCount);
     assert.ok(files.includes('index.html'));
-    assert.ok(files.includes(path.join('Guía', 'administracion', 'admin.html')));
+    assert.ok(files.includes('obra.html'));
+    assert.ok(files.includes('obra.js'));
+    assert.ok(files.includes('gallery-navigation.js'));
+    assert.ok(files.includes(path.join('administracion', 'admin.html')));
     assert.ok(files.includes(path.join('Supabase Connection', 'supabaseClient.js')));
-    assert.equal(files.filter((file) => file.startsWith(`assets${path.sep}demo${path.sep}`)).length, 20);
+    assert.equal(files.filter((file) => file.startsWith(`assets${path.sep}demo${path.sep}`)).length, demoCount);
     assert.ok(files.every((file) => !file.startsWith('Instalaciones')));
     assert.ok(!files.includes('DOCUMENTACION.md'));
     assert.ok(!files.includes(path.join('Supabase Connection', 'schema.sql')));

@@ -15,59 +15,60 @@
   <noscript><p class="page-width">Activa JavaScript para utilizar la administración.</p></noscript>
   <header class="admin-header">
     <div class="page-width header-inner">
-      <a class="brand" href="../../index.html">Gabriela Monzú<span>.</span></a>
-      <a class="back-link" href="../../index.html">Volver al portafolio ↗</a>
+      <a class="brand" href="../index.html">Gabriela Monzú<span>.</span><small>Administración del portafolio</small></a>
+      <div class="header-actions">
+        <a class="back-link" href="../index.html">Volver al portafolio ↗</a>
+        <button id="sign-out" class="quiet-button" type="button" hidden>Cerrar sesión</button>
+      </div>
     </div>
   </header>
   <main class="page-width">
-    <div class="page-heading">
-      <div>
-        <p class="eyebrow">ESPACIO DE TRABAJO / CATÁLOGO</p>
-        <h1>Administración<span>.</span></h1>
-        <p>Un espacio para organizar las obras y sus imágenes.</p>
-      </div>
-      <button id="sign-out" class="quiet-button" type="button" hidden>Cerrar sesión</button>
-    </div>
-
     <p id="global-status" class="message" role="status" aria-live="polite">Comprobando conexión…</p>
 
     <section id="login-panel" class="panel login-panel" aria-labelledby="login-title" hidden>
-      <p class="eyebrow">ACCESO PRIVADO</p>
-      <h2 id="login-title">Bienvenida.</h2>
-      <p>Inicia sesión con una cuenta autorizada para administrar el catálogo.</p>
+      <p class="eyebrow">ACCESO ADMINISTRADOR</p>
+      <h1 id="login-title">Iniciar sesión</h1>
+      <p>Accede a tu espacio para organizar las obras y sus imágenes.</p>
       <form id="login-form" class="form-stack">
         <label>Correo electrónico
           <input name="email" type="email" autocomplete="username" required>
         </label>
-        <label>Contraseña
-          <input name="password" type="password" autocomplete="current-password" required>
-        </label>
-        <button class="primary-button" type="submit">Ingresar <span aria-hidden="true">→</span></button>
+        <div class="password-field">
+          <label for="login-password">Contraseña</label>
+          <div class="password-control">
+            <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+            <button id="toggle-password" class="password-toggle" type="button" aria-label="Mostrar contraseña" aria-controls="login-password" aria-pressed="false">Mostrar</button>
+          </div>
+        </div>
+        <button class="primary-button" type="submit">Iniciar sesión <span aria-hidden="true">→</span></button>
       </form>
     </section>
 
     <section id="workspace" aria-labelledby="catalog-title" hidden>
-      <div class="catalog-top">
-        <div>
-          <p class="eyebrow">TUS OBRAS</p>
-          <h2 id="catalog-title">El catálogo</h2>
-          <p id="catalog-count" class="subtle"></p>
+      <div class="page-heading">
+        <p class="eyebrow">CATÁLOGO / ESPACIO DE TRABAJO</p>
+        <h1 id="catalog-title">Administración</h1>
+        <p>Organiza las fotografías de tu portafolio en un solo lugar.</p>
+      </div>
+      <div class="catalog-panel">
+        <div class="catalog-tools">
+          <label class="search-label"><span class="sr-only">Buscar obras</span>
+            <input id="search" type="search" placeholder="Buscar por nombre o categoría / colección">
+          </label>
+          <button id="add-work" class="primary-button" type="button">Agregar obra <span aria-hidden="true">＋</span></button>
         </div>
-        <button id="add-work" class="primary-button" type="button">Agregar obra <span aria-hidden="true">＋</span></button>
+        <div class="catalog-top">
+          <div class="catalog-summary"><span>Tus obras</span><p id="catalog-count" class="subtle"></p></div>
+          <p class="subtle">Clic derecho o botón de opciones para administrar cada obra.</p>
+        </div>
+        <div id="catalog-grid" class="catalog-grid" aria-label="Galería de obras"></div>
+        <p id="catalog-empty" class="empty-message" hidden></p>
       </div>
-      <div class="catalog-tools">
-        <label class="search-label"><span class="sr-only">Buscar obras</span>
-          <input id="search" type="search" placeholder="Buscar por nombre o categoría">
-        </label>
-        <span class="subtle">Las obras más recientes aparecen primero.</span>
+      <div id="work-menu" class="work-menu" role="group" aria-label="Opciones de la obra" hidden>
+        <button type="button" data-action="edit">Editar</button>
+        <button type="button" data-action="visibility">Ocultar</button>
+        <button type="button" data-action="delete" class="danger-action">Borrar</button>
       </div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Nombre</th><th>Categoría</th><th>Imágenes</th><th>Estado</th><th><span class="sr-only">Acciones</span></th></tr></thead>
-          <tbody id="catalog-rows"></tbody>
-        </table>
-      </div>
-      <p id="catalog-empty" class="empty-message" hidden></p>
     </section>
   </main>
 
@@ -81,7 +82,7 @@
         <label>Nombre <span aria-hidden="true">*</span>
           <input name="name" type="text" maxlength="160" required>
         </label>
-        <label>Categoría
+        <label>Categoría / colección
           <select name="category"><option value="">Sin categoría</option></select>
         </label>
       </div>
@@ -90,19 +91,11 @@
         <textarea name="description" rows="4"></textarea>
       </label>
       <div class="image-heading">
-        <div><h3>Imágenes</h3><p class="field-help">JPG, JPEG o PNG. La primera imagen será la portada.</p></div>
-        <label class="upload-button">Añadir imágenes <input id="image-files" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" multiple></label>
+        <div><h3>Fotografía</h3><p class="field-help" id="image-help">Selecciona una imagen JPG, JPEG o PNG.</p></div>
+        <label id="upload-label" class="upload-button">Elegir imagen <input id="image-files" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png"></label>
       </div>
       <div id="image-list" class="image-list"></div>
-      <p id="image-empty" class="field-help">Todavía no hay imágenes seleccionadas.</p>
-      <fieldset class="selection-group">
-        <legend>Obras destacadas</legend>
-        <p class="field-help">Para aparecer en un carrusel, la obra debe tener al menos dos imágenes.</p>
-        <label class="check-label"><input name="featured1" type="checkbox"> Selección 01</label>
-        <label class="check-label"><input name="featured2" type="checkbox"> Selección 02</label>
-      </fieldset>
-      <label class="check-label publish-choice"><input name="published" type="checkbox"> Publicar esta obra</label>
-      <p class="field-help">Para publicar se necesita una categoría y al menos una imagen. Si no se publica, quedará como borrador privado.</p>
+      <p id="image-empty" class="field-help">Todavía no hay una imagen seleccionada.</p>
       <p id="form-status" class="message" role="status" aria-live="polite"></p>
       <div class="form-actions">
         <button id="cancel-form" class="quiet-button" type="button">Cancelar</button>

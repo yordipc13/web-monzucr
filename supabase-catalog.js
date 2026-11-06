@@ -29,6 +29,11 @@ export async function downloadImage(path) {
   return data;
 }
 
+export function getPublicImageUrl(path) {
+  const { data } = bucket.getPublicUrl(path);
+  return data.publicUrl;
+}
+
 export async function getCategories() {
   const { data, error } = await supabase.from('monzu_categories').select('id,name').order('name');
   if (error) throw error;
