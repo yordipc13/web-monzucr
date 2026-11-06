@@ -142,6 +142,7 @@ dialog::backdrop { background: rgb(25 22 19 / 55%); }
 
 .intro {
   position: relative;
+  isolation: isolate;
   display: flex;
   align-items: end;
   justify-content: space-between;
@@ -149,6 +150,21 @@ dialog::backdrop { background: rgb(25 22 19 / 55%); }
   padding-block: clamp(70px, 9vw, 145px) clamp(55px, 7vw, 105px);
   border-bottom: 1px solid var(--line);
 }
+.ceramic-motif {
+  position: absolute;
+  z-index: 0;
+  right: clamp(-30px, 2vw, 20px);
+  bottom: clamp(18px, 4vw, 48px);
+  width: clamp(210px, 27vw, 390px);
+  height: auto;
+  color: var(--accent);
+  opacity: .16;
+  pointer-events: none;
+}
+.motif-fill { fill: none; stroke: currentColor; stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; }
+.motif-line { fill: none; stroke: currentColor; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+.motif-ember { stroke-width: 4; opacity: .75; }
+.intro > div, .intro-note { position: relative; z-index: 1; }
 .eyebrow, .section-number {
   color: var(--accent);
   font-size: .65rem;
@@ -252,7 +268,9 @@ h1, h2, p { margin-top: 0; }
 .more-wrap { display: flex; justify-content: center; margin-top: clamp(40px, 6vw, 80px); }
 .outline-button { display: inline-flex; align-items: center; justify-content: center; min-height: 54px; padding: 0 28px; border: 1px solid var(--ink); background: transparent; color: var(--ink); font-size: .73rem; font-weight: 700; text-decoration: none; cursor: pointer; }
 .outline-button:hover { background: var(--ink); color: var(--paper); }
-.gallery-page-heading { padding-top: clamp(70px, 8vw, 125px); padding-bottom: clamp(38px, 5vw, 65px); }
+.gallery-page-heading { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 30px; padding-top: clamp(70px, 8vw, 125px); padding-bottom: clamp(38px, 5vw, 65px); overflow: hidden; }
+.gallery-page-heading > div { position: relative; z-index: 1; }
+.gallery-motif { flex: 0 1 250px; width: clamp(170px, 22vw, 250px); height: auto; color: var(--accent); opacity: .14; pointer-events: none; }
 .gallery-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 25px; padding-block: 20px; border-block: 1px solid var(--line); margin-bottom: 30px; }
 .category-filters { display: flex; flex-wrap: wrap; gap: 8px; }
 .category-filters button { border: 0; border-radius: 30px; padding: 9px 14px; background: transparent; color: var(--muted); font-size: .74rem; cursor: pointer; }
@@ -264,7 +282,9 @@ h1, h2, p { margin-top: 0; }
 .site-footer .eyebrow { color: #e3cfc0; }
 .footer-inner { padding-block: 82px 22px; }
 .footer-main { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(150px, .55fr) minmax(280px, .9fr); align-items: start; gap: clamp(32px, 5vw, 76px); padding-bottom: 72px; }
-.footer-intro { display: grid; justify-items: start; }
+.footer-intro { position: relative; display: grid; justify-items: start; }
+.footer-motif { position: absolute; z-index: 0; right: clamp(0px, 2vw, 28px); top: 10px; width: 82px; height: 82px; color: #e3cfc0; opacity: .24; pointer-events: none; }
+.footer-intro > :not(.footer-motif) { position: relative; z-index: 1; }
 .footer-heading { max-width: 680px; margin: 0 0 27px; font-family: var(--serif); font-size: 4.25rem; font-weight: 400; line-height: 1.02; text-wrap: balance; }
 .footer-heading em { color: #c4bcb5; font-weight: 400; }
 .footer-brand { color: #c4bcb5; font-size: .78rem; font-weight: 600; text-decoration: none; }
@@ -330,12 +350,16 @@ h1, h2, p { margin-top: 0; }
 .detail-next { right: clamp(12px, 2vw, 30px); }
 .detail-notice { margin: 0; padding: 12px clamp(20px, 4vw, 60px); color: var(--accent); font-size: .8rem; line-height: 1.5; }
 .detail-notice:empty { display: none; }
+  .ceramic-motif { right: -90px; bottom: -18px; width: 230px; opacity: .09; }
 .detail-info { width: min(100% - 2 * clamp(20px, 5vw, 82px), 1100px); margin: 0 auto; display: grid; grid-template-columns: minmax(180px, 1fr) minmax(0, 2fr); gap: 30px; padding-block: clamp(38px, 6vw, 80px); }
 .detail-info .eyebrow { margin-bottom: 14px; }
 .detail-category, .detail-description { margin: 0; color: var(--muted); font-size: .9rem; line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere; }
 
 @media (max-width: 700px) {
   :root { --grid-columns: 2 !important; }
+  .gallery-page-heading { align-items: end; }
+  .gallery-page-heading .gallery-motif { position: absolute; }
+  .gallery-motif { position: absolute; right: -72px; bottom: 5px; width: 190px; opacity: .08; }
   .header-inner { min-height: 78px; }
   .theme-toggle { font-size: 0; }
   .theme-dot { width: 18px; height: 18px; }

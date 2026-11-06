@@ -184,6 +184,12 @@ export function initializeSite() {
       <div class="page-width footer-inner">
         <div class="footer-main">
           <div class="footer-intro">
+            <svg class="footer-motif" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+              <circle cx="60" cy="60" r="43" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="118 35" transform="rotate(-18 60 60)"/>
+              <path d="M60 35c12 11 18 24 18 39c0 15-8 23-18 23s-18-8-18-23c0-15 6-28 18-39Z" fill="none" stroke="currentColor" stroke-width="2"/>
+              <path d="M49 70c7 5 15 5 22 0M46 85c9 7 19 7 28 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M60 35c-7-8-5-16 3-23M63 12c6 4 9 10 8 17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
             <p class="eyebrow"><span class="eyebrow-line"></span> HABLEMOS</p>
             <h2 class="footer-heading" id="footer-heading">Sigamos en <em>contacto.</em></h2>
             <a class="footer-brand" href="./index.html" aria-label="Gabriela Monzú, inicio">Gabriela Monzú<span>.</span></a>
