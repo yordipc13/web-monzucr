@@ -1,0 +1,14 @@
+.git
+.gitignore
+.vscode
+.cloudflare-build
+.assetsignore
+wrangler.jsonc
+DOCUMENTACION.md
+Guía
+Instalaciones
+tests
+tools
+Supabase Connection/README.md
+Supabase Connection/schema.sql
+*.md

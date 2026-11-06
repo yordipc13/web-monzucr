@@ -62,7 +62,13 @@ Registro preparado para trasladar los cambios al documento de Drive «Emprendimi
 
 - **Fecha:** 2026-11-03.
 - **Implementación:** configuración base en `wrangler.jsonc` y preparación de un directorio estático mediante la lista explícita de `tools\prepare-cloudflare.mjs`.
-- **Explicación:** se excluyen las fotografías y los videos originales, las referencias, las pruebas y el esquema SQL. El script copia archivos sin compilar ni modificar el sitio y crea una configuración de despliegue en un directorio nuevo. No se debe servir la raíz del proyecto directamente: en Windows Wrangler no respetó el filtro de exclusión durante la prueba.
+- **Explicación:** se excluyen las fotografías y los videos originales, las referencias, las pruebas y el esquema SQL. El script copia archivos sin compilar ni modificar el sitio y crea una configuración de despliegue en un directorio nuevo. En la prueba de 2026-11-03 Wrangler no respetó el filtro al ejecutarse en Windows, por lo que la raíz se dejó sin publicar.
+
+## Despliegue directo desde la raíz
+
+- **Fecha:** 2026-11-06.
+- **Implementación:** `wrangler.jsonc` publica la raíz (`"directory": "./"`) y `.assetsignore` excluye `.git`, `tests`, `tools`, `Guía`, `Instalaciones`, documentación, `wrangler.jsonc` y el esquema SQL. El build de Cloudflare no necesita paso previo: el comando de despliegue es `npx wrangler deploy`.
+- **Explicación:** la ruta anterior `.cloudflare-build/prepare-first` no existía, y el script `tools\prepare-cloudflare.mjs` no se ejecutaba en el build, por lo que el deploy fallaba. Wrangler aplica `.assetsignore` con reglas de tipo `.gitignore`; esa comparación se verificó con rutas POSIX, que son las que usa el builder de Cloudflare (Linux). Después de publicar, comprobar que `/.git/config` y `/tests/catalog.test.mjs` responden 404.
 
 ## Verificación y manejo de errores
 
@@ -74,14 +80,14 @@ Registro preparado para trasladar los cambios al documento de Drive «Emprendimi
 
 - Servir la raíz del proyecto mediante HTTP/HTTPS; por ejemplo, ejecutar `python -m http.server 8765` y abrir `http://localhost:8765`.
 - Con Node.js 24, ejecutar `node --test tests\catalog.test.mjs tests\gallery-navigation.test.mjs tests\cloudflare.test.mjs` para comprobar el catálogo, la navegación y los archivos preparados para Cloudflare.
-- Para preparar un despliegue, ejecutar `node tools\prepare-cloudflare.mjs`, revisar los archivos generados y usar la configuración indicada por el script. Cada ejecución crea una carpeta nueva en `.cloudflare-build`; el `wrangler.jsonc` de la raíz apunta deliberadamente a una ruta inexistente para evitar publicar la raíz por accidente. Este paso solo copia archivos: no es necesario para ejecutar el sitio localmente.
+- Para una copia aislada del sitio, ejecutar `node tools\prepare-cloudflare.mjs`. Cada ejecución crea una carpeta nueva en `.cloudflare-build`. El despliegue normal publica la raíz según `wrangler.jsonc` y `.assetsignore`. Este paso solo copia archivos: no es necesario para ejecutar el sitio localmente.
 - La interfaz pública utiliza Swiper 11.2.10 y tipografías de Google Fonts; si Swiper no carga, se muestra un aviso y queda disponible una navegación simplificada.
 - El estado de Supabase se describe en `Supabase Connection\README.md`. El esquema está aplicado y una cuenta está autorizada; faltan las categorías, las obras definitivas y la prueba de extremo a extremo del acceso desde el navegador.
 - La publicación en Cloudflare Workers, las redes sociales, los datos ampliados de las obras y las secciones Instalaciones, Info, CV y Contacto quedan para más adelante.
 - La publicación en Cloudflare Workers, las redes sociales, los datos ampliados de las obras y las secciones Instalaciones, Info, CV y Contacto quedan para más adelante.
 - Servir la raíz del proyecto mediante HTTP/HTTPS; por ejemplo, ejecutar `python -m http.server 8765` y abrir `http://localhost:8765`.
 - Con Node.js 24, ejecutar `node --test tests\catalog.test.mjs tests\cloudflare.test.mjs` para comprobar el catálogo y los archivos preparados para Cloudflare.
-- Para preparar un despliegue, ejecutar `node tools\prepare-cloudflare.mjs`, revisar los archivos generados y usar la configuración indicada por el script. Cada ejecución crea una carpeta nueva en `.cloudflare-build`; el `wrangler.jsonc` de la raíz apunta deliberadamente a una ruta inexistente para evitar publicar la raíz por accidente. Este paso solo copia archivos: no es necesario para ejecutar el sitio localmente.
+- Para una copia aislada del sitio, ejecutar `node tools\prepare-cloudflare.mjs`. Cada ejecución crea una carpeta nueva en `.cloudflare-build`. El despliegue normal publica la raíz según `wrangler.jsonc` y `.assetsignore`. Este paso solo copia archivos: no es necesario para ejecutar el sitio localmente.
 - La interfaz pública utiliza Swiper 11.2.10 y tipografías de Google Fonts; si Swiper no carga, se muestra un aviso y queda disponible una navegación simplificada.
 - El estado de Supabase se describe en `Supabase Connection\README.md`. El catálogo ya contiene las instalaciones importadas; queda pendiente definir el contenido definitivo y una interfaz para cambiar las selecciones de los carruseles.
 - La publicación en Cloudflare Workers, las redes sociales, los datos ampliados de las obras y las secciones Instalaciones, Info, CV y Contacto quedan para más adelante.
