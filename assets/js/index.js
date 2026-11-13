@@ -5,6 +5,7 @@ import { artworkUrl, initializeGridControls, initializeSite } from './site.js';
 const SLIDE_TRANSITION_MS = 520;
 const PREFETCH_OFFSETS = [-2, -1, 1, 2];
 const SWIPE_THRESHOLD = 50;
+const WHEEL_THRESHOLD = 40;
 const DRAG_TOLERANCE = 10;
 
 function positionFor(offset) {
@@ -39,6 +40,9 @@ function createCarousel(section, covers) {
   let busy = false;
   let pointerStart = null;
   let dragged = false;
+  let wheelAccumulated = 0;
+  let wheelLocked = false;
+  let wheelTimer = null;
 
   function updateControls() {
     previous.hidden = covers.length < 2;
@@ -174,15 +178,6 @@ function createCarousel(section, covers) {
 
   previous.addEventListener('click', () => move(-1));
   next.addEventListener('click', () => move(1));
-  stage.addEventListener('keydown', (event) => {
-    if (event.key === 'ArrowLeft') {
-      event.preventDefault();
-      move(-1);
-    } else if (event.key === 'ArrowRight') {
-      event.preventDefault();
-      move(1);
-    }
-  });
   stage.addEventListener('pointerdown', (event) => {
     pointerStart = { x: event.clientX, y: event.clientY };
     dragged = false;
@@ -198,9 +193,26 @@ function createCarousel(section, covers) {
   stage.addEventListener('pointercancel', () => {
     pointerStart = null;
   });
+  stage.addEventListener('wheel', (event) => {
+    if (Math.abs(event.deltaX) <= Math.abs(event.deltaY)) return;
+    event.preventDefault();
+    wheelAccumulated += event.deltaX;
+    clearTimeout(wheelTimer);
+    wheelTimer = setTimeout(() => {
+      wheelAccumulated = 0;
+      wheelLocked = false;
+    }, 200);
+    if (!wheelLocked && Math.abs(wheelAccumulated) >= WHEEL_THRESHOLD) {
+      wheelLocked = true;
+      move(wheelAccumulated > 0 ? 1 : -1);
+      wheelAccumulated = 0;
+    }
+  }, { passive: false });
 
   updateControls();
   initialize();
+
+  return { stage, move };
 }
 
 async function initializeCarousels() {
@@ -216,7 +228,21 @@ async function initializeCarousels() {
     });
     return;
   }
-  sections.forEach((section) => createCarousel(section, covers));
+  const carousels = sections.map((section) => createCarousel(section, covers));
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    if (event.target.closest?.('input, textarea, select, [contenteditable="true"]')) return;
+    const visible = carousels
+      .map((carousel) => {
+        const rect = carousel.stage.getBoundingClientRect();
+        return { carousel, height: Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0) };
+      })
+      .filter(({ height }) => height > 0)
+      .sort((a, b) => b.height - a.height)[0];
+    if (!visible) return;
+    event.preventDefault();
+    visible.carousel.move(event.key === 'ArrowLeft' ? -1 : 1);
+  });
 }
 
 function initialize() {
