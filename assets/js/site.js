@@ -246,7 +246,6 @@ export function initializeSite() {
     applyTheme(next);
     savePreference(THEME_KEY, next);
   });
-
 }
 
 export function initializeDetailTheme() {

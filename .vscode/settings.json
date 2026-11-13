@@ -1,3 +1,10 @@
 {
-    "inlineChat.defaultModel": "Claude Haiku 5.5 (copilot)"
+    "inlineChat.defaultModel": "Claude Haiku 5.5 (copilot)",
+    "files.exclude": {
+        "**/.cloudflare-build": true,
+        "**/.wrangler": true,
+        "**/Guía": true,
+        "**/Supabase Connection": true,
+        "web/pages": true
+    }
 }

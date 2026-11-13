@@ -1,4 +1,4 @@
-import { supabase } from './Supabase Connection/supabaseClient.js';
+import { supabase } from '../../../Supabase/supabaseClient.js';
 
 const bucket = supabase.storage.from('monzu-artwork-images');
 const artworkFields = 'id,name,description,created_at,category_id,category:monzu_categories(name),images:monzu_images(id,position,storage_path,width,height,alt)';

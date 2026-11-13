@@ -3,12 +3,12 @@
 .vscode
 .cloudflare-build
 .assetsignore
+.wrangler
 wrangler.jsonc
-DOCUMENTACION.md
+informacion
 Guía
 Instalaciones
 tests
 tools
-Supabase Connection/README.md
-Supabase Connection/schema.sql
+Supabase/schema.sql
 *.md

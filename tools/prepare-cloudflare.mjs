@@ -1,21 +1,29 @@
 import { copyFile, lstat, mkdir, mkdtemp, readFile, realpath, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { demoWorks } from '../catalog.js';
-import { siteConfig } from '../site-config.js';
+import { demoWorks } from '../web/assets/js/catalog.js';
+import { siteConfig } from '../web/assets/js/site-config.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const outputParent = path.resolve(process.argv[2] || path.join(root, '.cloudflare-build'));
 const files = [
-  'index.html', 'index.css', 'index.js', 'galeria.html', 'gallery.js', 'gallery-page.js',
-  'obra.html', 'obra.js', 'gallery-navigation.js',
-  'catalog.js', 'site.js', 'site-config.js', 'supabase-catalog.js',
-  path.join('administracion', 'admin.html'),
-  path.join('administracion', 'admin.css'),
-  path.join('administracion', 'admin.js'),
-  path.join('Supabase Connection', 'supabaseClient.js'),
+  ['web/index.html', 'index.html'],
+  ['web/galeria.html', 'galeria.html'],
+  ['web/obra.html', 'obra.html'],
+  [path.join('web', 'assets', 'css', 'index.css'), path.join('web', 'assets', 'css', 'index.css')],
+  ...['catalog.js', 'gallery-navigation.js', 'gallery.js', 'gallery-page.js', 'index.js', 'obra.js', 'site-config.js', 'site.js', 'supabase-catalog.js']
+    .map((name) => [path.join('web', 'assets', 'js', name), path.join('web', 'assets', 'js', name)]),
+  ...[
+    path.join('administracion', 'admin.html'),
+    path.join('administracion', 'admin.css'),
+    path.join('administracion', 'admin.js'),
+    path.join('Supabase', 'supabaseClient.js'),
+  ].map((file) => [file, file]),
   ...(siteConfig.catalogSource === 'demo'
-    ? demoWorks.flatMap((work) => work.images.map((image) => path.relative(root, fileURLToPath(image.src))))
+    ? demoWorks.flatMap((work) => work.images.map((image) => {
+      const source = path.relative(root, fileURLToPath(image.src));
+      return [source, source];
+    }))
     : []),
 ];
 
@@ -29,14 +37,14 @@ try {
   const output = await mkdtemp(path.join(outputParent, 'site-'));
   const publicDir = path.join(output, 'public');
   await mkdir(publicDir);
-  for (const relativePath of files) {
-    const source = path.resolve(root, relativePath);
+  for (const [sourcePath, destinationPath] of files) {
+    const source = path.resolve(root, sourcePath);
     const sourceReal = await realpath(source);
     if (!sourceReal.startsWith(`${rootReal}${path.sep}`)) {
-      throw new Error(`El archivo está fuera del proyecto: ${relativePath}`);
+      throw new Error(`El archivo está fuera del proyecto: ${sourcePath}`);
     }
-    if (!(await lstat(source)).isFile()) throw new Error(`No es un archivo normal: ${relativePath}`);
-    const destination = path.join(publicDir, relativePath);
+    if (!(await lstat(source)).isFile()) throw new Error(`No es un archivo normal: ${sourcePath}`);
+    const destination = path.join(publicDir, destinationPath);
     await mkdir(path.dirname(destination), { recursive: true });
     await copyFile(source, destination);
   }

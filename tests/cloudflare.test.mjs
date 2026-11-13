@@ -5,8 +5,8 @@ import { spawnSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { demoWorks } from '../catalog.js';
-import { siteConfig } from '../site-config.js';
+import { demoWorks } from '../web/assets/js/catalog.js';
+import { siteConfig } from '../web/assets/js/site-config.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -40,14 +40,31 @@ test('la preparación de Cloudflare copia únicamente los archivos previstos', a
     assert.equal(files.length, 17 + demoCount);
     assert.ok(files.includes('index.html'));
     assert.ok(files.includes('obra.html'));
-    assert.ok(files.includes('obra.js'));
-    assert.ok(files.includes('gallery-navigation.js'));
+    assert.ok(files.includes(path.join('web', 'assets', 'css', 'index.css')));
+    assert.ok(files.includes(path.join('web', 'assets', 'js', 'obra.js')));
+    assert.ok(files.includes(path.join('web', 'assets', 'js', 'gallery-navigation.js')));
+    assert.ok(files.includes(path.join('web', 'assets', 'js', 'gallery.js')));
+    assert.ok(files.includes(path.join('web', 'assets', 'js', 'gallery-page.js')));
+    assert.ok(files.includes(path.join('web', 'assets', 'js', 'site-config.js')));
+    assert.ok(files.includes(path.join('web', 'assets', 'js', 'site.js')));
+    assert.ok(!files.includes(path.join('web', 'index.html')));
+    const homePage = await readFile(path.join(build, 'public', 'index.html'), 'utf8');
+    const galleryPage = await readFile(path.join(build, 'public', 'galeria.html'), 'utf8');
+    const artworkPage = await readFile(path.join(build, 'public', 'obra.html'), 'utf8');
+    assert.match(homePage, /href="\/web\/assets\/css\/index\.css"/);
+    assert.match(homePage, /src="\/web\/assets\/js\/index\.js"/);
+    assert.match(galleryPage, /src="\/web\/assets\/js\/gallery-page\.js"/);
+    assert.match(artworkPage, /src="\/web\/assets\/js\/obra\.js"/);
     assert.ok(files.includes(path.join('administracion', 'admin.html')));
-    assert.ok(files.includes(path.join('Supabase Connection', 'supabaseClient.js')));
-    assert.equal(files.filter((file) => file.startsWith(`assets${path.sep}demo${path.sep}`)).length, demoCount);
+    assert.ok(files.includes(path.join('administracion', 'admin.css')));
+    assert.ok(files.includes(path.join('administracion', 'admin.js')));
+    assert.ok(files.includes(path.join('Supabase', 'supabaseClient.js')));
+    assert.equal(files.filter((file) => file.startsWith(path.join('web', 'assets', 'demo') + path.sep)).length, demoCount);
     assert.ok(files.every((file) => !file.startsWith('Instalaciones')));
+    assert.ok(files.every((file) => !file.startsWith('informacion')));
     assert.ok(!files.includes('DOCUMENTACION.md'));
-    assert.ok(!files.includes(path.join('Supabase Connection', 'schema.sql')));
+    assert.ok(!files.includes(path.join('informacion', 'DOCUMENTACION.md')));
+    assert.ok(!files.includes(path.join('Supabase', 'schema.sql')));
   } finally {
     await rm(temporary, { recursive: true, force: true });
   }

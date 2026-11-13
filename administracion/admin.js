@@ -1,6 +1,6 @@
 
 
-import { initializePageTransitions } from '../site.js';
+import { initializePageTransitions } from '../web/assets/js/site.js';
 
 const loginPanel = document.getElementById('login-panel');
 const loginForm = document.getElementById('login-form');
@@ -423,7 +423,7 @@ async function deleteWork(work) {
 
 async function initialize() {
   try {
-    ({ supabase } = await import('../Supabase Connection/supabaseClient.js'));
+    ({ supabase } = await import('../Supabase/supabaseClient.js'));
     const { data, error } = await supabase.auth.getSession();
     if (error) throw error;
     if (data.session) await authorize();

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createGalleryNavigator } from '../gallery-navigation.js';
+import { createGalleryNavigator } from '../web/assets/js/gallery-navigation.js';
 
 function item(id, photoIndex = 0) {
   return { work: { id }, photo: {}, photoIndex };

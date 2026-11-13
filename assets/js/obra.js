@@ -34,6 +34,9 @@ const stage = document.querySelector('.detail-stage');
 const zoom = { scale: 1, x: 0, y: 0 };
 const MAX_SCALE = 4;
 const TAP_ZOOM_SCALE = 2.5;
+const SWIPE_THRESHOLD = 50;
+const SLIDE_TRANSITION_MS = 520;
+const PREFETCH_OFFSETS = [-2, -1, 1, 2];
 const pointers = new Map();
 let gesture = null;
 let pinchDistance = 0;
@@ -59,8 +62,8 @@ function clampZoom() {
   const ratio = img.naturalWidth && img.naturalHeight ? img.naturalWidth / img.naturalHeight : 1;
   const width = Math.min(box.clientWidth, box.clientHeight * ratio);
   const height = Math.min(box.clientHeight, box.clientWidth / ratio);
-  const maxX = Math.max(0, (width * zoom.scale - stage.clientWidth) / 2);
-  const maxY = Math.max(0, (height * zoom.scale - stage.clientHeight) / 2);
+  const maxX = Math.max(0, (width * zoom.scale - box.clientWidth) / 2);
+  const maxY = Math.max(0, (height * zoom.scale - box.clientHeight) / 2);
   zoom.x = Math.min(maxX, Math.max(-maxX, zoom.x));
   zoom.y = Math.min(maxY, Math.max(-maxY, zoom.y));
 }
@@ -138,6 +141,10 @@ function handlePointerMove(event) {
 function handlePointerEnd(event) {
   if (!pointers.has(event.pointerId)) return;
   const isTap = event.type === 'pointerup' && pointers.size === 1 && gesture && !gesture.moved;
+  const swipeX = event.clientX - (gesture?.x ?? event.clientX);
+  const swipeY = event.clientY - (gesture?.y ?? event.clientY);
+  const isSwipe = event.type === 'pointerup' && pointers.size === 1 && gesture && zoom.scale === 1
+    && Math.abs(swipeX) > SWIPE_THRESHOLD && Math.abs(swipeX) > Math.abs(swipeY) * 1.5;
   pointers.delete(event.pointerId);
   if (pointers.size === 1) {
     const [remaining] = pointers.values();
@@ -146,6 +153,11 @@ function handlePointerEnd(event) {
   if (pointers.size === 0) {
     gesture = null;
     stage.classList.remove('is-dragging');
+  }
+  if (isSwipe) {
+    const direction = swipeX < 0 ? 1 : -1;
+    if (direction === 1 ? !next.disabled : !previous.disabled) move(direction);
+    return;
   }
   if (isTap) {
     if (zoom.scale > 1) {
@@ -207,7 +219,10 @@ async function createSlide(item, key) {
   const slide = document.createElement('div');
   slide.className = 'detail-slide';
   slide.dataset.key = key;
-  slide.append(image);
+  const frame = document.createElement('div');
+  frame.className = 'detail-image';
+  frame.append(image);
+  slide.append(frame);
   slide.addEventListener('click', () => {
     if (slide.dataset.position === 'previous' && !previous.disabled) move(-1);
     if (slide.dataset.position === 'next' && !next.disabled) move(1);
@@ -248,24 +263,38 @@ function renderDetails(item) {
   document.querySelector('.detail-skeleton')?.remove();
 }
 
-async function prepareWindow(item) {
-  const before = await navigator.peek(-1);
-  let after = null;
+async function peekSide(offset) {
   try {
-    after = await navigator.peek(1);
+    return { offset, item: await navigator.peek(offset) };
   } catch (error) {
-    console.error('No se pudo cargar la vista previa de la siguiente fotografía.', error);
-    status.textContent = 'No se pudo cargar la siguiente vista previa. Puedes intentar avanzar.';
+    console.error('No se pudo cargar la vista previa de una fotografía cercana.', error);
+    status.textContent = 'No se pudieron cargar todas las vistas previas. Puedes seguir navegando.';
+    return { offset, item: null };
   }
-  const sides = [
-    { item: before, position: 'previous' },
-    { item: after, position: 'next' },
-  ].filter((side) => side.item);
+}
+
+async function prepareWindow(item) {
+  const sides = (await Promise.all(PREFETCH_OFFSETS.map(peekSide))).filter((side) => side.item);
   const prepared = await Promise.all([item, ...sides.map((side) => side.item)].map((entry) => prepareSlide(entry)));
   return [
-    { item, position: 'current', slide: prepared[0] },
-    ...sides.map((side, index) => ({ ...side, slide: prepared[index + 1] })),
+    { item, offset: 0, slide: prepared[0] },
+    ...sides.map((side, index) => ({ item: side.item, offset: side.offset, slide: prepared[index + 1] })),
   ];
+}
+
+function positionFor(offset) {
+  if (offset === 0) return 'current';
+  if (offset === -1) return 'previous';
+  if (offset === 1) return 'next';
+  if (offset === -2) return 'far-previous';
+  if (offset === 2) return 'far-next';
+  return offset < 0 ? 'out-left' : 'out-right';
+}
+
+function setOffset(slide, offset) {
+  slide.dataset.offset = String(offset);
+  slide.dataset.position = positionFor(offset);
+  slide.setAttribute('aria-hidden', String(offset !== 0));
 }
 
 function syncSlides(entries) {
@@ -276,26 +305,17 @@ function syncSlides(entries) {
   for (const key of [...slideCache.keys()]) {
     if (!keys.has(key)) slideCache.delete(key);
   }
-  entries.forEach(({ slide, position }) => {
+  entries.forEach(({ slide, offset }) => {
     if (!slide.isConnected) track.append(slide);
-    slide.dataset.position = position;
-    slide.setAttribute('aria-hidden', String(position !== 'current'));
+    setOffset(slide, offset);
   });
 }
 
 async function animateSlides(direction) {
-  const positions = direction === 1
-    ? { previous: 'out-left', current: 'previous', next: 'current' }
-    : { previous: 'current', current: 'next', next: 'out-right' };
-  const moving = [...track.children];
-  const start = moving.map((slide) => getComputedStyle(slide).transform);
-  moving.forEach((slide) => { slide.dataset.position = positions[slide.dataset.position]; });
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || moving.some((slide) => typeof slide.animate !== 'function')) return;
-  const animations = moving.map((slide, index) => slide.animate(
-    [{ transform: start[index] }, { transform: getComputedStyle(slide).transform }],
-    { duration: 520, easing: 'cubic-bezier(.22, 1, .36, 1)' },
-  ));
-  await Promise.all(animations.map((animation) => animation.finished));
+  void track.offsetWidth;
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  [...track.children].forEach((slide) => setOffset(slide, Number(slide.dataset.offset) - direction));
+  if (!reducedMotion) await new Promise((resolve) => setTimeout(resolve, SLIDE_TRANSITION_MS + 40));
 }
 
 async function move(direction) {
@@ -308,7 +328,7 @@ async function move(direction) {
     if (item) {
       const incoming = await prepareSlide(item);
       if (!incoming.isConnected) {
-        incoming.dataset.position = direction === 1 ? 'next' : 'previous';
+        setOffset(incoming, direction);
         track.append(incoming);
       }
       currentItem = item;

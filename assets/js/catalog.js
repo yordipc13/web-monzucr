@@ -21,7 +21,7 @@ export const demoWorks = demoImageDimensions.map((dimensions, groupIndex) => {
     images: dimensions.map(([width, height], imageIndex) => {
       const number = String(imageIndex + 1).padStart(2, '0');
       const extension = groupIndex === 0 && imageIndex === 2 ? 'png' : 'jpg';
-      return { src: new URL(`./assets/demo/${group}-${number}.${extension}`, import.meta.url).href, width, height };
+      return { src: new URL(`../demo/${group}-${number}.${extension}`, import.meta.url).href, width, height };
     }),
   };
 });

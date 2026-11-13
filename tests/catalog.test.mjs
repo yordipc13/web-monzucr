@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { demoWorks, makeFeaturedSlides, paginateDemo } from '../catalog.js';
+import { demoWorks, makeFeaturedSlides, paginateDemo } from '../web/assets/js/catalog.js';
 
 test('el catálogo temporal agrupa veinte fotografías en seis obras', () => {
   assert.equal(demoWorks.length, 6);
