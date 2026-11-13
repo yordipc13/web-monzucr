@@ -62,7 +62,7 @@ export async function initializeGalleryPage() {
       if (offset === 0) gallery.replaceChildren(...pageItems);
       else gallery.append(...pageItems);
       gallery.setAttribute('aria-busy', 'false');
-      offset += page.items.length;
+      offset = page.nextOffset;
       hasMore = page.hasMore;
       moreWrap.hidden = !hasMore;
       status.textContent = offset ? '' : 'Todavía no hay obras en esta categoría.';

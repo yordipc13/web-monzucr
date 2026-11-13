@@ -1,6 +1,6 @@
 
 
-import { initializePageTransitions } from '../web/assets/js/site.js';
+import { initializePageTransitions } from '../assets/js/site.js';
 
 const loginPanel = document.getElementById('login-panel');
 const loginForm = document.getElementById('login-form');
@@ -161,6 +161,14 @@ function renderCatalog() {
       const rect = options.getBoundingClientRect();
       openMenu(work, options, rect.right, rect.bottom);
     });
+    card.tabIndex = 0;
+    card.addEventListener('click', (event) => {
+      if (event.target.closest('.work-options')) return;
+      openEditor(work);
+    });
+    card.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' && event.target === card) openEditor(work);
+    });
     card.addEventListener('contextmenu', (event) => {
       event.preventDefault();
       openMenu(work, options, event.clientX, event.clientY);
@@ -234,10 +242,6 @@ async function openEditor(work = null) {
     document.getElementById('category-help').textContent = categories.length
       ? 'La categoría es obligatoria para publicar.'
       : 'Las categorías están pendientes de configuración en Supabase.';
-    document.getElementById('upload-label').hidden = Boolean(work && work.images.length);
-    document.getElementById('image-help').textContent = work && work.images.length
-      ? 'Las imágenes existentes se conservan al editar los datos.'
-      : 'Selecciona una imagen JPG, JPEG o PNG.';
     setFormStatus('');
     dirty = false;
     renderImages();
@@ -258,27 +262,112 @@ function closeEditor() {
   dialog.close();
 }
 
-function renderImages() {
-  imageList.replaceChildren();
-  document.getElementById('image-empty').hidden = images.length !== 0;
-  images.forEach((image, index) => {
-    const row = document.createElement('div');
-    row.className = 'image-row';
-    const preview = document.createElement('img');
-    preview.src = image.src;
-    preview.alt = '';
-    preview.addEventListener('error', () => setFormStatus('No se pudo cargar una vista previa de la imagen.'), { once: true });
-    const info = document.createElement('div');
-    info.className = 'image-info';
-    const title = document.createElement('strong');
-    title.textContent = index === 0 ? 'Portada' : `Imagen ${index + 1}`;
-    const name = document.createElement('span');
-    name.textContent = image.file?.name || 'Imagen guardada';
-    info.append(title, name);
-    row.append(preview, info);
-    imageList.append(row);
+function isSupportedImage(file) {
+  return ['image/jpeg', 'image/png'].includes(file.type) && /\.(jpe?g|png)$/i.test(file.name);
+}
+
+function createImageRow(image) {
+  const row = document.createElement('div');
+  row.className = 'image-row';
+  const handle = document.createElement('button');
+  handle.type = 'button';
+  handle.className = 'drag-handle';
+  handle.textContent = '⠿';
+  handle.setAttribute('aria-label', 'Arrastrar para reordenar');
+  const preview = document.createElement('img');
+  preview.src = image.src;
+  preview.alt = '';
+  preview.draggable = false;
+  preview.addEventListener('error', () => setFormStatus('No se pudo cargar una vista previa de la imagen.'), { once: true });
+  const info = document.createElement('div');
+  info.className = 'image-info';
+  const title = document.createElement('strong');
+  title.className = 'image-title';
+  const name = document.createElement('span');
+  name.textContent = image.file?.name || 'Imagen guardada';
+  info.append(title, name);
+  const moves = document.createElement('div');
+  moves.className = 'image-moves';
+  for (const [direction, label] of [['up', 'Subir'], ['down', 'Bajar']]) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'quiet-button';
+    button.dataset.move = direction;
+    button.textContent = label;
+    button.setAttribute('aria-label', `${label} imagen`);
+    moves.append(button);
+  }
+  row.append(handle, preview, info, moves);
+  return row;
+}
+
+function refreshImageRows() {
+  [...imageList.children].forEach((row, index) => {
+    row.querySelector('.image-title').textContent = index === 0 ? 'Portada' : `Imagen ${index + 1}`;
+    row.querySelector('[data-move="up"]').disabled = index === 0;
+    row.querySelector('[data-move="down"]').disabled = index === images.length - 1;
   });
 }
+
+function renderImages() {
+  imageList.replaceChildren(...images.map(createImageRow));
+  document.getElementById('image-empty').hidden = images.length !== 0;
+  refreshImageRows();
+}
+
+function moveImage(from, to) {
+  if (from === to || to < 0 || to >= images.length) return;
+  const [moved] = images.splice(from, 1);
+  images.splice(to, 0, moved);
+  const rows = imageList.children;
+  const row = rows[from];
+  if (to > from) rows[to].after(row);
+  else rows[to].before(row);
+  dirty = true;
+  refreshImageRows();
+}
+
+let dragState = null;
+
+imageList.addEventListener('pointerdown', (event) => {
+  const handle = event.target.closest('.drag-handle');
+  if (!handle || event.button !== 0) return;
+  event.preventDefault();
+  const row = handle.closest('.image-row');
+  handle.setPointerCapture(event.pointerId);
+  row.classList.add('is-dragging');
+  dragState = { row, handle, pointerId: event.pointerId };
+});
+
+imageList.addEventListener('pointermove', (event) => {
+  if (!dragState || event.pointerId !== dragState.pointerId) return;
+  const rows = [...imageList.children];
+  const from = rows.indexOf(dragState.row);
+  const below = rows.findIndex((candidate) => {
+    const rect = candidate.getBoundingClientRect();
+    return event.clientY < rect.top + rect.height / 2;
+  });
+  let to = below === -1 ? rows.length - 1 : below;
+  if (to > from) to -= 1;
+  moveImage(from, to);
+});
+
+function endImageDrag(event) {
+  if (!dragState || event.pointerId !== dragState.pointerId) return;
+  dragState.row.classList.remove('is-dragging');
+  dragState = null;
+}
+
+imageList.addEventListener('pointerup', endImageDrag);
+imageList.addEventListener('pointercancel', endImageDrag);
+
+imageList.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-move]');
+  if (!button) return;
+  const row = button.closest('.image-row');
+  const index = [...imageList.children].indexOf(row);
+  moveImage(index, button.dataset.move === 'up' ? index - 1 : index + 1);
+});
 
 async function imageDimensions(file) {
   const bitmap = await createImageBitmap(file);
@@ -297,7 +386,7 @@ async function saveWork(event) {
   const categoryId = form.elements.category.value || null;
   const publish = editorPublish;
   if (!name) return setFormStatus('Escribe el nombre de la obra.');
-  if (!images.length) return setFormStatus('Selecciona una imagen para la obra.');
+  if (!images.length) return setFormStatus('Agrega al menos una imagen; la primera será la portada.');
   if (publish && (!categoryId || !images.length)) return setFormStatus('Para publicar, elige una categoría y añade al menos una imagen.');
   saving = true;
   const controls = Array.from(form.querySelectorAll('input, select, textarea, button'), (control) => ({
@@ -316,6 +405,7 @@ async function saveWork(event) {
       editingId = workId;
     }
 
+    const previousOrder = originalImages.map((image) => image.id);
     let position = originalImages.reduce((max, image) => Math.max(max, image.position), -1) + 1;
     for (const image of images) {
       if (!image.file) continue;
@@ -334,8 +424,11 @@ async function saveWork(event) {
       Object.assign(image, result.data);
       image.file = null;
       originalImages.push(result.data);
-      document.getElementById('upload-label').hidden = true;
       position += 1;
+    }
+    const finalOrder = images.map((image) => image.id);
+    if (finalOrder.slice(0, previousOrder.length).some((id, index) => id !== previousOrder[index])) {
+      requireSuccess(await supabase.rpc('monzu_reorder_images', { p_artwork_id: workId, p_image_ids: finalOrder }));
     }
     if (publish) {
       requireSuccess(await supabase.from('monzu_artworks').update({ status: 'published' }).eq('id', workId).select('id').single());
@@ -503,17 +596,19 @@ dialog.addEventListener('cancel', (event) => { event.preventDefault(); closeEdit
 form.addEventListener('input', () => { dirty = true; });
 form.addEventListener('change', () => { dirty = true; });
 imageInput.addEventListener('change', () => {
-  const file = imageInput.files[0];
-  if (!file) return;
-  if (!['image/jpeg', 'image/png'].includes(file.type) || !/\.(jpe?g|png)$/i.test(file.name)) {
-    setFormStatus('Selecciona únicamente imágenes JPG, JPEG o PNG válidas.');
-    imageInput.value = '';
+  const files = [...imageInput.files];
+  imageInput.value = '';
+  if (!files.length) return;
+  const invalid = files.find((file) => !isSupportedImage(file));
+  if (invalid) {
+    setFormStatus(`«${invalid.name}» no es una imagen JPG, JPEG o PNG válida. No se agregó ninguna de las imágenes seleccionadas.`);
     return;
   }
-  releaseImages();
-  const objectUrl = URL.createObjectURL(file);
-  images = [{ file, objectUrl, src: objectUrl }];
-  imageInput.value = '';
+  images.push(...files.map((file) => {
+    const objectUrl = URL.createObjectURL(file);
+    return { file, objectUrl, src: objectUrl };
+  }));
+  dirty = true;
   setFormStatus('');
   renderImages();
 });

@@ -1,17 +1,19 @@
 export function createGalleryNavigator(loadPage, categoryId = null, pageSize = 24) {
   const items = [];
   let hasMore = true;
+  let nextOffset = 0;
   let current = -1;
   let pending = null;
 
   async function loadNext() {
     if (!pending) {
       pending = (async () => {
-        const page = await loadPage({ offset: items.length, limit: pageSize, categoryId });
+        const page = await loadPage({ offset: nextOffset, limit: pageSize, categoryId });
         if (page.hasMore && !page.items.length) {
           throw new Error('La fuente devolvió una página vacía con más resultados pendientes.');
         }
         items.push(...page.items);
+        nextOffset = page.nextOffset;
         hasMore = page.hasMore;
       })();
     }
@@ -45,12 +47,17 @@ export function createGalleryNavigator(loadPage, categoryId = null, pageSize = 2
       current = index;
       return items[current];
     },
+    async at(index) {
+      while (index >= items.length && hasMore) await loadNext();
+      return items[index] || null;
+    },
     peek,
     async move(direction) {
       const item = await peek(direction);
       if (item) current += direction;
       return item;
     },
+    get position() { return current; },
     get hasPrevious() { return current > 0; },
     get hasNext() { return current >= 0 && (current + 1 < items.length || hasMore); },
   };

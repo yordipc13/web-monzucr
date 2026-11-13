@@ -1,4 +1,3 @@
-const THEME_KEY = 'monzu-theme';
 const GRID_KEY = 'monzu-gallery-columns';
 const PAGE_TRANSITION_KEY = 'monzu-page-transition';
 
@@ -153,11 +152,8 @@ export function initializeSite() {
   header.innerHTML = `
     <header class="site-header">
       <div class="page-width header-inner">
-        <a class="brand" href="./index.html" aria-label="Gabriela Monzú, inicio"><span class="brand-name">Gabriela Monzú</span><span class="brand-mark" aria-hidden="true">.</span></a>
+        <a class="brand" href="./index.html" aria-label="Gabriela Monzú, inicio"><span class="brand-name">GABRIELA MONZÚ</span><span class="brand-mark" aria-hidden="true">.</span></a>
         <div class="header-actions">
-          <button class="theme-toggle" type="button" aria-pressed="false" aria-label="Cambiar propuesta visual">
-            <span class="theme-dot" aria-hidden="true"></span><span class="theme-text"></span>
-          </button>
           <button class="menu-trigger" type="button" aria-haspopup="dialog" aria-controls="menu-dialog">
             Menú <span class="menu-lines" aria-hidden="true"></span>
           </button>
@@ -174,7 +170,6 @@ export function initializeSite() {
         <a href="./index.html">Inicio <small>01</small></a>
         <button type="button" disabled>Instalaciones <small>Próximamente</small></button>
         <button type="button" disabled>Info <small>Próximamente</small></button>
-        <button type="button" disabled>CV <small>Próximamente</small></button>
         <button type="button" disabled>Contacto <small>Próximamente</small></button>
       </nav>
       <p class="drawer-note">Gabriela Monzú · Portafolio</p>
@@ -232,32 +227,15 @@ export function initializeSite() {
   menu.addEventListener('click', (event) => {
     if (event.target === menu) menu.close();
   });
-
-  const toggle = header.querySelector('.theme-toggle');
-  const applyTheme = (theme) => {
-    const warm = theme === 'warm';
-    document.documentElement.dataset.theme = warm ? 'warm' : 'light';
-    toggle.setAttribute('aria-pressed', String(warm));
-    toggle.querySelector('.theme-text').textContent = warm ? 'Estilo cálido' : 'Estilo claro';
-  };
-  applyTheme(readPreference(THEME_KEY, 'light'));
-  toggle.addEventListener('click', () => {
-    const next = document.documentElement.dataset.theme === 'warm' ? 'light' : 'warm';
-    applyTheme(next);
-    savePreference(THEME_KEY, next);
-  });
 }
 
-export function initializeDetailTheme() {
-  document.documentElement.dataset.theme = readPreference(THEME_KEY, 'light') === 'warm' ? 'warm' : 'light';
-}
-
-export function artworkUrl(workId, photoIndex = 0, categoryId = null, source = 'gallery') {
+export function artworkUrl(workId, photoIndex = 0, categoryId = null, source = 'gallery', scope = 'gallery') {
   const url = new URL('./obra.html', window.location.href);
   url.searchParams.set('id', workId);
   if (photoIndex) url.searchParams.set('photo', String(photoIndex));
   if (categoryId) url.searchParams.set('category', categoryId);
   if (source === 'home') url.searchParams.set('from', 'home');
+  if (scope === 'work') url.searchParams.set('scope', 'work');
   return url.href;
 }
 

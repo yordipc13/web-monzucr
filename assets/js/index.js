@@ -1,95 +1,228 @@
-import { getFeaturedWorks, makeFeaturedSlides } from './catalog.js';
+import { getHomeWorks, makeCoverItems, photoSource } from './catalog.js';
 import { renderPreview } from './gallery.js';
-import { artworkUrl, createImage, initializeGridControls, initializeSite } from './site.js';
+import { artworkUrl, initializeGridControls, initializeSite } from './site.js';
 
-function createSlide(photos) {
-  const slide = document.createElement('div');
-  slide.className = 'swiper-slide';
-  const pair = document.createElement('div');
-  pair.className = 'carousel-pair';
-  photos.forEach(({ work, photo, index }) => {
-    const button = document.createElement('a');
-    button.href = artworkUrl(work.id, index, null, 'home');
-    button.className = 'carousel-photo';
-    button.setAttribute('aria-label', `Ver detalles de ${work.name}, fotografía ${index + 1}`);
-    const image = createImage(photo, work, index);
-    button.append(image);
-    pair.append(button);
-  });
-  slide.append(pair);
-  return slide;
+const SLIDE_TRANSITION_MS = 520;
+const PREFETCH_OFFSETS = [-2, -1, 1, 2];
+const SWIPE_THRESHOLD = 50;
+const DRAG_TOLERANCE = 10;
+
+function positionFor(offset) {
+  if (offset === 0) return 'current';
+  if (offset === -1) return 'previous';
+  if (offset === 1) return 'next';
+  if (offset === -2) return 'far-previous';
+  if (offset === 2) return 'far-next';
+  return offset < 0 ? 'out-left' : 'out-right';
 }
 
-async function initializeCarousel(slot) {
-  const shell = document.querySelector(`[data-carousel="${slot}"]`);
-  const section = shell.closest('section');
-  const status = section.querySelector('[data-carousel-status]');
+function setOffset(slide, offset) {
+  slide.dataset.offset = String(offset);
+  slide.dataset.position = positionFor(offset);
+  slide.setAttribute('aria-hidden', String(offset !== 0));
+}
+
+function reducedMotion() {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+function createCarousel(section, covers) {
+  const stage = section.querySelector('.home-carousel-stage');
+  const track = section.querySelector('[data-carousel-track]');
+  const previous = section.querySelector('.detail-previous');
+  const next = section.querySelector('.detail-next');
   const caption = section.querySelector('[data-carousel-caption]');
   const count = section.querySelector('[data-carousel-count]');
-  const slider = shell.querySelector('.work-swiper');
-  const wrapper = slider.querySelector('.swiper-wrapper');
-  const previous = shell.querySelector('.carousel-previous');
-  const next = shell.querySelector('.carousel-next');
-  status.textContent = 'Cargando obras…';
-  try {
-    const slides = makeFeaturedSlides(await getFeaturedWorks(slot));
-    if (!slides.length) {
-      slider.setAttribute('aria-busy', 'false');
-      status.textContent = 'Todavía no hay obras destacadas en esta selección.';
-      previous.hidden = true;
-      next.hidden = true;
-      return;
-    }
-    wrapper.replaceChildren(...slides.map(createSlide));
-    slider.setAttribute('aria-busy', 'false');
-    const firstImages = wrapper.querySelectorAll('.swiper-slide:first-child img');
-    firstImages.forEach((image) => { image.loading = 'eager'; });
-    const updateCaption = (index) => {
-      caption.textContent = [...new Set(slides[index].map(({ work }) => work.name))].join(' / ');
-      count.textContent = `${String(index + 1).padStart(2, '0')} / ${String(slides.length).padStart(2, '0')}`;
-    };
-    updateCaption(0);
-    status.textContent = '';
-    previous.hidden = slides.length < 2;
-    next.hidden = slides.length < 2;
+  const status = section.querySelector('[data-carousel-status]');
+  const slideCache = new Map();
+  let index = 0;
+  let busy = false;
+  let pointerStart = null;
+  let dragged = false;
 
-    if (window.Swiper) {
-      new window.Swiper(slider, {
-        slidesPerView: 1,
-        speed: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 550,
-        touchAngle: 30,
-        navigation: { prevEl: previous, nextEl: next },
-        on: { slideChange(swiper) { updateCaption(swiper.activeIndex); } },
-      });
-    } else {
-      console.warn('Swiper no está disponible; se usa navegación táctil simplificada.');
-      status.textContent = 'La animación avanzada no está disponible; puedes seguir navegando.';
-      slider.classList.add('is-fallback');
-      const goTo = (direction) => {
-        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        wrapper.scrollBy({ left: direction * wrapper.clientWidth, behavior: reducedMotion ? 'auto' : 'smooth' });
-      };
-      previous.addEventListener('click', () => goTo(-1));
-      next.addEventListener('click', () => goTo(1));
-      wrapper.addEventListener('scroll', () => {
-        const index = Math.min(slides.length - 1, Math.round(wrapper.scrollLeft / wrapper.clientWidth));
-        updateCaption(index);
-      }, { passive: true });
-    }
-  } catch (error) {
-    console.error('No se pudo cargar el carrusel.', error);
-    slider.setAttribute('aria-busy', 'false');
-    status.textContent = 'No se pudieron cargar las obras de esta selección.';
-    previous.hidden = true;
-    next.hidden = true;
+  function updateControls() {
+    previous.hidden = covers.length < 2;
+    next.hidden = covers.length < 2;
+    previous.disabled = busy || index <= 0;
+    next.disabled = busy || index >= covers.length - 1;
   }
+
+  function updateCaption() {
+    caption.textContent = covers[index].work.name;
+    count.textContent = `${String(index + 1).padStart(2, '0')} / ${String(covers.length).padStart(2, '0')}`;
+  }
+
+  async function createSlide(position) {
+    const { work, photo } = covers[position];
+    const url = await photoSource(photo);
+    const image = new Image();
+    image.alt = photo.alt || `Portada de ${work.name}`;
+    image.decoding = 'async';
+    image.draggable = false;
+    if (photo.width && photo.height) {
+      image.width = photo.width;
+      image.height = photo.height;
+    }
+    image.src = url;
+    await image.decode();
+    const link = document.createElement('a');
+    link.className = 'detail-image home-carousel-link';
+    link.href = artworkUrl(work.id, 0, null, 'home', 'work');
+    link.setAttribute('aria-label', `Ver ${work.name}`);
+    link.append(image);
+    const slide = document.createElement('div');
+    slide.className = 'detail-slide';
+    slide.dataset.key = String(position);
+    slide.append(link);
+    link.addEventListener('click', (event) => {
+      if (dragged) {
+        event.preventDefault();
+        return;
+      }
+      const offset = Number(slide.dataset.offset);
+      if (offset === 0) return;
+      event.preventDefault();
+      if (Math.abs(offset) === 1) move(offset);
+    });
+    return slide;
+  }
+
+  function getSlide(position) {
+    const key = String(position);
+    if (!slideCache.has(key)) {
+      const pending = createSlide(position);
+      slideCache.set(key, pending);
+      pending.catch(() => slideCache.delete(key));
+    }
+    return slideCache.get(key);
+  }
+
+  async function prepareWindow(center) {
+    const offsets = [0, ...PREFETCH_OFFSETS].filter((offset) => center + offset >= 0 && center + offset < covers.length);
+    const entries = await Promise.all(offsets.map(async (offset) => {
+      try {
+        return { offset, slide: await getSlide(center + offset) };
+      } catch (error) {
+        if (offset === 0) throw error;
+        console.error('No se pudo precargar una portada cercana.', error);
+        return null;
+      }
+    }));
+    return entries.filter(Boolean);
+  }
+
+  function syncSlides(entries) {
+    const keys = new Set(entries.map(({ slide }) => slide.dataset.key));
+    for (const slide of [...track.children]) {
+      if (!keys.has(slide.dataset.key)) slide.remove();
+    }
+    for (const key of [...slideCache.keys()]) {
+      if (!keys.has(key)) slideCache.delete(key);
+    }
+    entries.forEach(({ slide, offset }) => {
+      if (!slide.isConnected) track.append(slide);
+      setOffset(slide, offset);
+    });
+  }
+
+  async function move(offset) {
+    const target = index + offset;
+    if (busy || target < 0 || target >= covers.length) return;
+    busy = true;
+    updateControls();
+    try {
+      const incoming = await getSlide(target);
+      if (!incoming.isConnected) {
+        setOffset(incoming, offset);
+        track.append(incoming);
+      }
+      index = target;
+      const windowReady = prepareWindow(target);
+      windowReady.catch(() => {});
+      void track.offsetWidth;
+      [...track.children].forEach((slide) => setOffset(slide, Number(slide.dataset.offset) - offset));
+      updateCaption();
+      status.textContent = '';
+      if (!reducedMotion()) await new Promise((resolve) => setTimeout(resolve, SLIDE_TRANSITION_MS + 40));
+      syncSlides(await windowReady);
+    } catch (error) {
+      console.error('No se pudo cambiar de obra.', error);
+      status.textContent = 'No se pudo cargar la obra. Inténtalo de nuevo.';
+    } finally {
+      busy = false;
+      updateControls();
+    }
+  }
+
+  async function initialize() {
+    try {
+      if (covers.length) {
+        syncSlides(await prepareWindow(0));
+        updateCaption();
+      } else {
+        status.textContent = 'Todavía no hay obras publicadas.';
+      }
+    } catch (error) {
+      console.error('No se pudo cargar el carrusel.', error);
+      status.textContent = 'No se pudieron cargar las obras de esta selección.';
+    } finally {
+      stage.setAttribute('aria-busy', 'false');
+      stage.querySelector('.detail-skeleton')?.remove();
+      updateControls();
+    }
+  }
+
+  previous.addEventListener('click', () => move(-1));
+  next.addEventListener('click', () => move(1));
+  stage.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      move(-1);
+    } else if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      move(1);
+    }
+  });
+  stage.addEventListener('pointerdown', (event) => {
+    pointerStart = { x: event.clientX, y: event.clientY };
+    dragged = false;
+  });
+  stage.addEventListener('pointerup', (event) => {
+    if (!pointerStart) return;
+    const dx = event.clientX - pointerStart.x;
+    const dy = event.clientY - pointerStart.y;
+    pointerStart = null;
+    if (Math.hypot(dx, dy) > DRAG_TOLERANCE) dragged = true;
+    if (Math.abs(dx) >= SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy)) move(dx < 0 ? 1 : -1);
+  });
+  stage.addEventListener('pointercancel', () => {
+    pointerStart = null;
+  });
+
+  updateControls();
+  initialize();
+}
+
+async function initializeCarousels() {
+  const sections = [...document.querySelectorAll('.home-carousel')];
+  let covers;
+  try {
+    covers = makeCoverItems(await getHomeWorks());
+  } catch (error) {
+    console.error('No se pudieron cargar las obras del inicio.', error);
+    sections.forEach((section) => {
+      section.querySelector('[data-carousel-status]').textContent = 'No se pudieron cargar las obras.';
+      section.querySelector('.detail-skeleton')?.remove();
+    });
+    return;
+  }
+  sections.forEach((section) => createCarousel(section, covers));
 }
 
 function initialize() {
   initializeSite();
   initializeGridControls();
-  initializeCarousel(1);
-  initializeCarousel(2);
+  initializeCarousels();
   renderPreview();
 }
 

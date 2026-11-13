@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createGalleryNavigator } from '../web/assets/js/gallery-navigation.js';
+import { createGalleryNavigator } from '../assets/js/gallery-navigation.js';
 
 function item(id, photoIndex = 0) {
   return { work: { id }, photo: {}, photoIndex };
@@ -11,7 +11,7 @@ test('navega por todas las páginas respetando la categoría y sus límites', as
   const requests = [];
   const navigator = createGalleryNavigator(async (query) => {
     requests.push(query);
-    return { items: items.slice(query.offset, query.offset + query.limit), hasMore: query.offset + query.limit < items.length };
+    return { items: items.slice(query.offset, query.offset + query.limit), hasMore: query.offset + query.limit < items.length, nextOffset: query.offset + query.limit };
   }, 'instalaciones', 2);
   assert.equal((await navigator.find('b', 0)).work.id, 'b');
   assert.equal(navigator.hasPrevious, true);
@@ -34,10 +34,21 @@ test('navega por todas las páginas respetando la categoría y sus límites', as
 test('encuentra fotografías diferentes de la misma obra en páginas separadas', async () => {
   const items = [item('a', 0), item('a', 1), item('b', 0)];
   const navigator = createGalleryNavigator(async ({ offset, limit }) => ({
-    items: items.slice(offset, offset + limit), hasMore: offset + limit < items.length,
+    items: items.slice(offset, offset + limit), hasMore: offset + limit < items.length, nextOffset: offset + limit,
   }), null, 1);
   assert.equal((await navigator.find('a', 1)).photoIndex, 1);
   assert.equal((await navigator.move(-1)).photoIndex, 0);
+});
+
+test('at() carga páginas hasta el índice pedido y devuelve null fuera de la galería', async () => {
+  const items = [item('a'), item('b'), item('c')];
+  const navigator = createGalleryNavigator(async ({ offset, limit }) => ({
+    items: items.slice(offset, offset + limit), hasMore: offset + limit < items.length, nextOffset: offset + limit,
+  }), null, 1);
+  await navigator.find('a', 0);
+  assert.equal((await navigator.at(2)).work.id, 'c');
+  assert.equal(await navigator.at(3), null);
+  assert.equal(navigator.position, 0);
 });
 
 test('obtiene imágenes vecinas sin avanzar y comparte la carga en límites de página', async () => {
@@ -46,7 +57,7 @@ test('obtiene imágenes vecinas sin avanzar y comparte la carga en límites de p
   const navigator = createGalleryNavigator(async ({ offset, limit, categoryId }) => {
     calls.push([offset, categoryId]);
     await new Promise((resolve) => setTimeout(resolve, 5));
-    return { items: items.slice(offset, offset + limit), hasMore: offset + limit < items.length };
+    return { items: items.slice(offset, offset + limit), hasMore: offset + limit < items.length, nextOffset: offset + limit };
   }, 'coleccion', 1);
   await navigator.find('b', 0);
   const [before, after, sameAfter] = await Promise.all([navigator.peek(-1), navigator.peek(1), navigator.peek(1)]);
@@ -60,9 +71,9 @@ test('obtiene imágenes vecinas sin avanzar y comparte la carga en límites de p
 test('comunica obras ausentes y permite reintentar un error de carga', async () => {
   let attempts = 0;
   const navigator = createGalleryNavigator(async ({ offset }) => {
-    if (offset === 0) return { items: [item('a')], hasMore: true };
+    if (offset === 0) return { items: [item('a')], hasMore: true, nextOffset: 1 };
     if (++attempts === 1) throw new Error('Error de conexión');
-    return { items: [item('b')], hasMore: false };
+    return { items: [item('b')], hasMore: false, nextOffset: 2 };
   }, null, 1);
   await navigator.find('a', 0);
   await assert.rejects(navigator.move(1), /Error de conexión/);

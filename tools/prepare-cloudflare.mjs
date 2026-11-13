@@ -1,18 +1,18 @@
 import { copyFile, lstat, mkdir, mkdtemp, readFile, realpath, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { demoWorks } from '../web/assets/js/catalog.js';
-import { siteConfig } from '../web/assets/js/site-config.js';
+import { demoWorks } from '../assets/js/catalog.js';
+import { siteConfig } from '../assets/js/site-config.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const outputParent = path.resolve(process.argv[2] || path.join(root, '.cloudflare-build'));
 const files = [
-  ['web/index.html', 'index.html'],
-  ['web/galeria.html', 'galeria.html'],
-  ['web/obra.html', 'obra.html'],
-  [path.join('web', 'assets', 'css', 'index.css'), path.join('web', 'assets', 'css', 'index.css')],
+  ['index.html', 'index.html'],
+  ['galeria.html', 'galeria.html'],
+  ['obra.html', 'obra.html'],
+  [path.join('assets', 'css', 'index.css'), path.join('assets', 'css', 'index.css')],
   ...['catalog.js', 'gallery-navigation.js', 'gallery.js', 'gallery-page.js', 'index.js', 'obra.js', 'site-config.js', 'site.js', 'supabase-catalog.js']
-    .map((name) => [path.join('web', 'assets', 'js', name), path.join('web', 'assets', 'js', name)]),
+    .map((name) => [path.join('assets', 'js', name), path.join('assets', 'js', name)]),
   ...[
     path.join('administracion', 'admin.html'),
     path.join('administracion', 'admin.css'),

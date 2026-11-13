@@ -100,6 +100,14 @@ dialog::backdrop { background: rgb(36 29 24 / 60%); }
 .image-row img { width: 60px; height: 60px; object-fit: contain; background: var(--soft); }
 .image-info { flex: 1; min-width: 0; color: var(--muted); font-size: .7rem; overflow-wrap: anywhere; }
 .image-info strong { display: block; margin-bottom: 4px; color: var(--ink); }
+.image-row.is-dragging { opacity: .6; border-color: var(--ink); }
+.drag-handle { min-width: 32px; min-height: 35px; border: 1px solid var(--line); background: transparent; color: var(--muted); font-size: 1rem; cursor: grab; touch-action: none; }
+.drag-handle:active { cursor: grabbing; }
+.image-moves { display: flex; flex-direction: column; gap: 4px; }
+.image-moves button { min-height: 30px; padding: 4px 8px; font-size: .68rem; }
+.image-moves button:disabled { opacity: .35; cursor: default; }
+.work-card { cursor: pointer; }
+.work-card:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
 .image-actions { display: flex; gap: 4px; }
 .image-actions button { min-width: 32px; min-height: 35px; border: 1px solid var(--line); background: transparent; cursor: pointer; }
 .image-actions button:disabled { opacity: .35; cursor: default; }

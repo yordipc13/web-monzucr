@@ -33,35 +33,30 @@ async function getRemoteCatalog() {
   return import('./supabase-catalog.js');
 }
 
-export async function getFeaturedWorks(slot) {
-  if (siteConfig.catalogSource === 'demo') {
-    if (slot !== 1 && slot !== 2) throw new Error('La selección del carrusel no es válida.');
-    return demoWorks.slice((slot - 1) * 3, slot * 3);
-  }
-  return (await getRemoteCatalog()).getFeaturedWorks(slot);
+export async function getHomeWorks() {
+  if (siteConfig.catalogSource === 'demo') return [...demoWorks].reverse();
+  return (await getRemoteCatalog()).getHomeWorks();
 }
 
-export function makeFeaturedSlides(works) {
-  const slides = [];
-  let single = null;
-  for (const work of works) {
-    if (!work.images.length) continue;
-    const photos = work.images.slice(0, 2).map((photo, index) => ({ work, photo, index }));
-    if (photos.length === 2) {
-      if (single) {
-        slides.push([single]);
-        single = null;
-      }
-      slides.push(photos);
-    } else if (single) {
-      slides.push([single, photos[0]]);
-      single = null;
-    } else {
-      single = photos[0];
-    }
+export function makeCoverItems(works) {
+  return works
+    .filter((work) => work.images.length)
+    .map((work) => ({ work, photo: work.images[0], photoIndex: 0 }));
+}
+
+const sourceCache = new Map();
+
+export function photoSource(photo) {
+  if (photo.src) return Promise.resolve(photo.src);
+  const key = photo.storagePath;
+  if (!sourceCache.has(key)) {
+    const pending = getRemoteCatalog()
+      .then(({ downloadImage }) => downloadImage(key))
+      .then((blob) => URL.createObjectURL(blob));
+    sourceCache.set(key, pending);
+    pending.catch(() => sourceCache.delete(key));
   }
-  if (single) slides.push([single]);
-  return slides;
+  return sourceCache.get(key);
 }
 
 export async function getCategories() {
@@ -90,7 +85,8 @@ export function paginateDemo(works, offset, limit, categoryId = null) {
 
 export async function getGalleryPage({ offset = 0, limit = 12, categoryId = null } = {}) {
   if (siteConfig.catalogSource === 'demo') {
-    return paginateDemo([...demoWorks].reverse(), offset, limit, categoryId);
+    const page = paginateDemo([...demoWorks].reverse(), offset, limit, categoryId);
+    return { ...page, nextOffset: offset + page.items.length };
   }
   return (await getRemoteCatalog()).getGalleryPage({ offset, limit, categoryId });
 }

@@ -17,13 +17,13 @@ Registro preparado para trasladar los cambios al documento de Drive «Emprendimi
 ## Datos de prueba y selección de obras
 
 - **Fecha:** 2026-11-03.
-- **Implementación:** se preparó un catálogo de demostración de seis obras en `catalog.js`. La fuente actual se indica en `web/assets/js/site-config.js`.
+- **Implementación:** se preparó un catálogo de demostración de seis obras en `catalog.js`. La fuente actual se indica en `assets/js/site-config.js`.
 - **Explicación:** este catálogo es provisional y no se usa en la configuración pública actual.
 
 ## Carruseles y galería
 
 - **Fecha:** 2026-11-03.
-- **Implementación:** dos carruseles manuales con Swiper, detalle compartido, galería adaptable, selector de columnas y carga incremental. La vista previa muestra hasta 24 fotografías.
+- **Implementación:** dos carruseles de portada con una foto por obra, controladores laterales, fragmentos de las fotos vecinas y precarga de cinco imágenes; detalle compartido con la misma navegación, galería adaptable, selector de columnas y carga incremental. La vista previa muestra hasta 24 fotografías.
 - **Explicación:** el catálogo público muestra una portada por obra. En móviles se mantienen dos espacios por carrusel y dos columnas en la galería.
 
 ## Fotografías y vista independiente
@@ -67,7 +67,7 @@ Registro preparado para trasladar los cambios al documento de Drive «Emprendimi
 ## Despliegue mediante paquete
 
 - **Fecha:** 2026-11-06.
-- **Implementación:** `tools\prepare-cloudflare.mjs` copia las páginas desde `web/` a la raíz del paquete, conserva los assets bajo `web/assets/`, y añade `administracion/` y el cliente de Supabase. Wrangler usa la configuración generada dentro de `.cloudflare-build/`; esa carpeta es salida temporal, no fuente.
+- **Implementación:** `tools\prepare-cloudflare.mjs` copia las páginas desde la raíz a la raíz del paquete, conserva los assets bajo `assets/`, y añade `administracion/` y el cliente de Supabase. Wrangler usa la configuración generada dentro de `.cloudflare-build/`; esa carpeta es salida temporal, no fuente.
 - **Explicación:** preparar el paquete antes de publicar mantiene `/`, `/galeria.html`, `/obra.html` y `/administracion/admin.html`, y excluye documentación, pruebas, herramientas y `Supabase/schema.sql`. Usar el comando de despliegue que imprime el preparador con su configuración generada; no desplegar la raíz directamente. Como antecedente, el 2026-11-06 se probó publicar desde la raíz y se documentó que la ruta `.cloudflare-build/prepare-first` no existía y el script no corría automáticamente; este flujo sustituye ese intento.
 
 ## Verificación y manejo de errores
@@ -78,15 +78,15 @@ Registro preparado para trasladar los cambios al documento de Drive «Emprendimi
 
 ## Ejecución y pendientes
 
-- Para revisar las páginas fuente en local, servir la raíz del proyecto por HTTP/HTTPS y abrir `http://localhost:8765/web/index.html`; las rutas del paquete desplegado publican las páginas en `/`.
+- Para revisar las páginas fuente en local, servir la raíz del proyecto por HTTP/HTTPS y abrir `http://localhost:8765/index.html`; las rutas del paquete desplegado publican las páginas en `/`.
 - Con Node.js 24, ejecutar `node --test tests\catalog.test.mjs tests\gallery-navigation.test.mjs tests\cloudflare.test.mjs` para comprobar el catálogo, la navegación y el paquete.
 - Ejecutar `node tools\prepare-cloudflare.mjs` para generar un paquete en `.cloudflare-build/`; el script indica la configuración que se usa al desplegar.
-- La interfaz pública utiliza Swiper 11.2.10 y tipografías de Google Fonts; si Swiper no carga, se muestra un aviso y queda disponible una navegación simplificada.
+- La interfaz pública no utiliza bibliotecas de carrusel externas; los carruseles del inicio y el detalle de obra comparten la misma navegación y se cargan con tipografías de Google Fonts.
 - El estado de Supabase se describe en `informacion\supabase.md`. El esquema está aplicado y una cuenta está autorizada; faltan las categorías, las obras definitivas y la prueba de extremo a extremo del acceso desde el navegador.
 - La publicación en Cloudflare Workers, las redes sociales, los datos ampliados de las obras y las secciones Instalaciones, Info, CV y Contacto quedan para más adelante.
 
 ## Organización del proyecto
 
 - **Fecha:** 2026-11-10.
-- **Implementación:** páginas y módulos públicos agrupados en `web/`; el panel permanece en `administracion/` y conserva `/administracion/admin.html`. El esquema y el cliente de Supabase se agrupan en `Supabase/`; la documentación se consolida en `informacion/`.
-- **Explicación:** el preparador de `tools/prepare-cloudflare.mjs` mantiene las URLs públicas copiando las páginas de `web/` a la raíz del paquete, conserva los assets bajo `/web/assets/`, e incluye el panel y el cliente de Supabase sin publicar el esquema ni la documentación. `.cloudflare-build/` es una salida temporal generada, no una carpeta fuente. Se conservaron las notas técnicas anteriores durante la consolidación.
+El código público vive en la raíz (`index.html`, `galeria.html`, `obra.html`, `assets/`); el panel permanece en `administracion/` y conserva `/administracion/admin.html`. El esquema y el cliente de Supabase se agrupan en `Supabase/`; la documentación se consolida en `informacion/`.
+- **Explicación:** el preparador de `tools/prepare-cloudflare.mjs` mantiene las URLs públicas copiando las páginas de la raíz a la raíz del paquete, conserva los assets bajo `/assets/`, e incluye el panel y el cliente de Supabase sin publicar el esquema ni la documentación. `.cloudflare-build/` es una salida temporal generada, no una carpeta fuente. Se conservaron las notas técnicas anteriores durante la consolidación.

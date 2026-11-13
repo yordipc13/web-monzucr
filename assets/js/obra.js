@@ -1,9 +1,6 @@
-import { getGalleryPage } from './catalog.js';
+import { getArtworkById, getGalleryPage, photoSource } from './catalog.js';
 import { createGalleryNavigator } from './gallery-navigation.js';
-import { siteConfig } from './site-config.js';
-import { artworkUrl, initializeDetailTheme, updateSocialMetadata } from './site.js';
-
-initializeDetailTheme();
+import { artworkUrl, updateSocialMetadata } from './site.js';
 
 const params = new URLSearchParams(window.location.search);
 const workId = params.get('id');
@@ -11,13 +8,13 @@ const photoParam = params.get('photo');
 const photoIndex = photoParam === null ? 0 : Number(photoParam);
 const categoryId = params.get('category') || null;
 const source = params.get('from') === 'home' ? 'home' : 'gallery';
+const scope = params.get('scope') === 'work' ? 'work' : 'gallery';
 const back = document.getElementById('detail-back');
 const backUrl = new URL(source === 'home' ? './index.html' : './galeria.html', window.location.href);
 if (source === 'gallery' && categoryId) backUrl.searchParams.set('category', categoryId);
 back.href = backUrl.href;
 back.querySelector('span').textContent = source === 'home' ? 'Volver al inicio' : 'Volver a la galería';
 
-const navigator = createGalleryNavigator(getGalleryPage, categoryId);
 const title = document.getElementById('detail-title');
 const track = document.getElementById('detail-track');
 const status = document.getElementById('detail-status');
@@ -27,9 +24,10 @@ const info = document.getElementById('detail-info');
 const category = document.getElementById('detail-category');
 const description = document.getElementById('detail-description');
 let loading = false;
-let currentItem = null;
+let sequence = null;
+let currentIndex = 0;
+let controlsRun = 0;
 const slideCache = new Map();
-const sourceCache = new Map();
 const stage = document.querySelector('.detail-stage');
 const zoom = { scale: 1, x: 0, y: 0 };
 const MAX_SCALE = 4;
@@ -180,30 +178,29 @@ stage.addEventListener('wheel', (event) => {
   zoomAt(zoom.scale * Math.exp(-event.deltaY * 0.01), point.x, point.y);
 }, { passive: false });
 
-function updateControls() {
-  previous.disabled = loading || !navigator.hasPrevious;
-  next.disabled = loading || !navigator.hasNext;
-}
-
-function slideKey(item) {
-  return JSON.stringify([item.work.id, item.photoIndex]);
-}
-
-function photoSource(photo) {
-  if (photo.src) return Promise.resolve(photo.src);
-  const key = photo.storagePath;
-  if (!sourceCache.has(key)) {
-    const pending = import('./supabase-catalog.js')
-      .then(({ downloadImage }) => downloadImage(key))
-      .then((blob) => URL.createObjectURL(blob));
-    sourceCache.set(key, pending);
-    pending.catch(() => sourceCache.delete(key));
+async function updateControls() {
+  const run = ++controlsRun;
+  previous.disabled = loading || currentIndex <= 0;
+  if (loading || !sequence) {
+    next.disabled = true;
+    return;
   }
-  return sourceCache.get(key);
+  const exists = await sequence.at(currentIndex + 1).catch(() => null);
+  if (run !== controlsRun) return;
+  next.disabled = loading || !exists;
+}
+
+function createWorkSequence(work) {
+  return {
+    async at(index) {
+      if (index < 0 || index >= work.images.length) return null;
+      return { work, photo: work.images[index], photoIndex: index };
+    },
+  };
 }
 
 async function createSlide(item, key) {
-  const photo = item.work.images[item.photoIndex];
+  const photo = item.photo;
   if (!photo) throw new Error('La fotografía seleccionada no está disponible.');
   const url = await photoSource(photo);
   const image = new Image();
@@ -230,56 +227,64 @@ async function createSlide(item, key) {
   return slide;
 }
 
-function prepareSlide(item) {
-  const key = slideKey(item);
+async function loadSlide(index, key) {
+  const item = await sequence.at(index);
+  return item ? createSlide(item, key) : null;
+}
+
+function prepareSlide(index) {
+  const key = String(index);
   if (!slideCache.has(key)) {
-    const pending = createSlide(item, key);
+    const pending = loadSlide(index, key);
     slideCache.set(key, pending);
-    pending.catch(() => slideCache.delete(key));
+    pending.then((slide) => {
+      if (!slide) slideCache.delete(key);
+    }, () => slideCache.delete(key));
   }
   return slideCache.get(key);
 }
 
 function renderDetails(item) {
-  title.textContent = item.work.name;
-  document.title = `${item.work.name} | Gabriela Monzú`;
-  category.textContent = item.work.category || '';
-  description.textContent = item.work.description || '';
-  info.hidden = !item.work.category && !item.work.description;
+  const { work } = item;
+  title.textContent = work.name;
+  document.title = `${work.name} | Gabriela Monzú`;
+  category.textContent = work.category || '';
+  description.textContent = work.description || '';
+  info.hidden = !work.category && !work.description;
   document.getElementById('site-notice').textContent = '';
   status.textContent = '';
-  const detailUrl = artworkUrl(item.work.id, item.photoIndex, categoryId, source);
+  const detailUrl = artworkUrl(work.id, item.photoIndex, categoryId, source, scope);
   history.replaceState(history.state, '', detailUrl);
-  const descriptionText = item.work.description || `${item.work.category || 'Obra'} por Gabriela Monzú.`;
+  const descriptionText = work.description || `${work.category || 'Obra'} por Gabriela Monzú.`;
+  const photo = item.photo;
   let image = '';
-  if (item.work.images[item.photoIndex]?.src) image = item.work.images[item.photoIndex].src;
-  else if (item.work.images[item.photoIndex]?.storagePath) {
+  if (photo?.src) image = photo.src;
+  else if (photo?.storagePath) {
     import('./supabase-catalog.js').then(({ getPublicImageUrl }) => {
-      updateSocialMetadata({ title: `${item.work.name} | Gabriela Monzú`, description: descriptionText, image: getPublicImageUrl(item.work.images[item.photoIndex].storagePath), url: detailUrl });
+      updateSocialMetadata({ title: `${work.name} | Gabriela Monzú`, description: descriptionText, image: getPublicImageUrl(photo.storagePath), url: detailUrl });
     }).catch((error) => console.error('No se pudo preparar la imagen para compartir.', error));
   }
-  updateSocialMetadata({ title: `${item.work.name} | Gabriela Monzú`, description: descriptionText, image, url: detailUrl });
+  updateSocialMetadata({ title: `${work.name} | Gabriela Monzú`, description: descriptionText, image, url: detailUrl });
   document.querySelector('.detail-stage')?.setAttribute('aria-busy', 'false');
   document.querySelector('.detail-skeleton')?.remove();
 }
 
-async function peekSide(offset) {
-  try {
-    return { offset, item: await navigator.peek(offset) };
-  } catch (error) {
-    console.error('No se pudo cargar la vista previa de una fotografía cercana.', error);
-    status.textContent = 'No se pudieron cargar todas las vistas previas. Puedes seguir navegando.';
-    return { offset, item: null };
-  }
-}
-
-async function prepareWindow(item) {
-  const sides = (await Promise.all(PREFETCH_OFFSETS.map(peekSide))).filter((side) => side.item);
-  const prepared = await Promise.all([item, ...sides.map((side) => side.item)].map((entry) => prepareSlide(entry)));
-  return [
-    { item, offset: 0, slide: prepared[0] },
-    ...sides.map((side, index) => ({ item: side.item, offset: side.offset, slide: prepared[index + 1] })),
-  ];
+async function prepareWindow(centerIndex) {
+  const offsets = [0, ...PREFETCH_OFFSETS];
+  const entries = await Promise.all(offsets.map(async (offset) => {
+    const index = centerIndex + offset;
+    if (index < 0) return null;
+    try {
+      const slide = await prepareSlide(index);
+      return slide ? { offset, slide } : null;
+    } catch (error) {
+      if (offset === 0) throw error;
+      console.error('No se pudo precargar una fotografía cercana.', error);
+      status.textContent = 'No se pudieron cargar todas las fotografías cercanas. Puedes seguir navegando.';
+      return null;
+    }
+  }));
+  return entries.filter(Boolean);
 }
 
 function positionFor(offset) {
@@ -298,7 +303,7 @@ function setOffset(slide, offset) {
 }
 
 function syncSlides(entries) {
-  const keys = new Set(entries.map(({ item }) => slideKey(item)));
+  const keys = new Set(entries.map(({ slide }) => slide.dataset.key));
   for (const slide of [...track.children]) {
     if (!keys.has(slide.dataset.key)) slide.remove();
   }
@@ -319,28 +324,30 @@ async function animateSlides(direction) {
 }
 
 async function move(direction) {
-  if (loading) return;
+  if (loading || !sequence) return;
+  const targetIndex = currentIndex + direction;
+  if (targetIndex < 0) return;
   loading = true;
   updateControls();
   resetZoom(true);
   try {
-    const item = await navigator.move(direction);
-    if (item) {
-      const incoming = await prepareSlide(item);
-      if (!incoming.isConnected) {
-        setOffset(incoming, direction);
-        track.append(incoming);
-      }
-      currentItem = item;
-      const windowReady = prepareWindow(item);
-      windowReady.catch(() => {});
-      try {
-        await animateSlides(direction);
-      } finally {
-        renderDetails(item);
-      }
-      syncSlides(await windowReady);
+    const item = await sequence.at(targetIndex);
+    if (!item) return;
+    const incoming = await prepareSlide(targetIndex);
+    if (!incoming) return;
+    if (!incoming.isConnected) {
+      setOffset(incoming, direction);
+      track.append(incoming);
     }
+    currentIndex = targetIndex;
+    const windowReady = prepareWindow(targetIndex);
+    windowReady.catch(() => {});
+    try {
+      await animateSlides(direction);
+    } finally {
+      renderDetails(item);
+    }
+    syncSlides(await windowReady);
   } catch (error) {
     console.error('No se pudo navegar por la galería.', error);
     status.textContent = 'No se pudo cargar la fotografía. Inténtalo de nuevo.';
@@ -371,13 +378,21 @@ async function initialize() {
     if (!workId || !Number.isSafeInteger(photoIndex) || photoIndex < 0 || (photoParam !== null && !/^\d+$/.test(photoParam))) {
       throw new Error('El enlace de la fotografía no es válido.');
     }
-    const galleryIndex = siteConfig.catalogSource === 'demo' ? photoIndex : 0;
-    const item = await navigator.find(workId, galleryIndex);
-    currentItem = { ...item, photoIndex };
-    const entries = await prepareWindow(currentItem);
-    renderDetails(currentItem);
+    if (scope === 'work') {
+      const loaded = await getArtworkById(workId);
+      if (!loaded || !loaded.images?.length) throw new Error('La obra no existe o no tiene fotografías.');
+      if (photoIndex >= loaded.images.length) throw new Error('La fotografía solicitada no existe en esta obra.');
+      sequence = createWorkSequence(loaded);
+      currentIndex = photoIndex;
+    } else {
+      sequence = createGalleryNavigator(getGalleryPage, categoryId);
+      await sequence.find(workId, photoIndex);
+      currentIndex = sequence.position;
+    }
+    const entries = await prepareWindow(currentIndex);
+    renderDetails(await sequence.at(currentIndex));
     syncSlides(entries);
-    updateControls();
+    await updateControls();
   } catch (error) {
     console.error('No se pudo abrir la fotografía.', error);
     status.textContent = `No se pudo abrir la fotografía: ${error.message}`;

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { demoWorks, makeFeaturedSlides, paginateDemo } from '../web/assets/js/catalog.js';
+import { demoWorks, makeCoverItems, paginateDemo } from '../assets/js/catalog.js';
 
 test('el catálogo temporal agrupa veinte fotografías en seis obras', () => {
   assert.equal(demoWorks.length, 6);
@@ -24,15 +24,16 @@ test('las dos selecciones temporales son independientes y muestran obras con dos
   assert.ok(first.every((work) => !second.some((other) => other.id === work.id)));
 });
 
-test('los carruseles agrupan fotos independientes y conservan las obras con varias fotos', () => {
-  const single = (id) => ({ id, images: [{ src: `${id}.jpg` }] });
-  const multi = { id: 'multi', images: [{ src: '1.jpg' }, { src: '2.jpg' }, { src: '3.jpg' }] };
-  const slides = makeFeaturedSlides([single('a'), single('b'), multi, single('c')]);
-  assert.deepEqual(slides.map((slide) => slide.map(({ work, index }) => [work.id, index])), [
-    [['a', 0], ['b', 0]], [['multi', 0], ['multi', 1]], [['c', 0]],
-  ]);
-  assert.deepEqual(makeFeaturedSlides([single('a'), multi, single('b')]).map((slide) => slide.length), [1, 2, 1]);
-  assert.deepEqual(makeFeaturedSlides([{ id: 'empty', images: [] }]), []);
+test('los carruseles del inicio muestran una portada por obra y omiten obras sin fotos', () => {
+  const works = [
+    { id: 'a', images: [{ src: 'a1.jpg' }, { src: 'a2.jpg' }] },
+    { id: 'empty', images: [] },
+    { id: 'b', images: [{ src: 'b1.jpg' }] },
+  ];
+  const covers = makeCoverItems(works);
+  assert.deepEqual(covers.map(({ work, photoIndex }) => [work.id, photoIndex]), [['a', 0], ['b', 0]]);
+  assert.equal(covers[0].photo.src, 'a1.jpg');
+  assert.deepEqual(makeCoverItems([]), []);
 });
 
 test('la paginación respeta límite, desplazamiento y categoría', () => {

@@ -13,4 +13,4 @@ Esta carpeta agrupa todo lo que es documentación, referencias y contexto del pr
 
 ## Regla
 
-Todo lo que es solo información debe quedarse aquí. El código público vive en `web/`, el panel permanece en `administracion/`, las pruebas en `tests/`, las herramientas en `tools/` y los artefactos de base de datos en `Supabase/`. La salida temporal de publicación está en `.cloudflare-build/` y no se usa para guardar fuentes.
+Todo lo que es solo información debe quedarse aquí. El código público vive en la raíz (`index.html`, `assets/`), el panel permanece en `administracion/`, las pruebas en `tests/`, las herramientas en `tools/` y los artefactos de base de datos en `Supabase/`. La salida temporal de publicación está en `.cloudflare-build/` y no se usa para guardar fuentes.
