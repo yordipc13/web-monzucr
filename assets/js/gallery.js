@@ -174,7 +174,7 @@ export function initializeHomeGallery() {
     preview.hidden = true;
     expandWrap.hidden = true;
     full.hidden = false;
-    if (window.location.hash !== '#galeria') history.replaceState(history.state, '', `${window.location.pathname}${window.location.search}#galeria`);
+    if (scroll && window.location.hash !== '#galeria') history.replaceState(history.state, '', `${window.location.pathname}${window.location.search}#galeria`);
     if (scroll) section.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
   }
 

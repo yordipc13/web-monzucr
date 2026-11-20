@@ -299,7 +299,7 @@ export function createImage(photo, work, index = 0) {
 
 export function initializeGridControls() {
   const controls = document.querySelectorAll('[data-grid-control]');
-  let columns = readPreference(GRID_KEY, '3') === '4' ? '4' : '3';
+  let columns = readPreference(GRID_KEY, '4') === '3' ? '3' : '4';
   const applyColumns = () => {
     document.documentElement.style.setProperty('--grid-columns', columns);
     controls.forEach((control) => {
