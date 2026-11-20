@@ -182,5 +182,5 @@ export function initializeHomeGallery() {
   window.addEventListener('hashchange', () => {
     if (window.location.hash === '#galeria') showFullGallery({ scroll: true });
   });
-  if (window.location.hash === '#galeria') showFullGallery({ scroll: false });
+  showFullGallery({ scroll: false });
 }

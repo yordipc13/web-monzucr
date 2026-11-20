@@ -25,3 +25,4 @@ La información histórica debe estar aquí y no mezclada con el código del sit
 - La galería muestra en cada portada la cantidad total de imágenes de su obra.
 - El indicador de cantidad se oculta al seleccionar el filtro «Todas» y se conserva para «Instalaciones».
 - Se eliminó el punto decorativo de la marca en la barra superior.
+- La galería completa y su barra de filtros y columnas se muestran desde la primera carga de la página.
