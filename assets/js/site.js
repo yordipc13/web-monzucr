@@ -33,13 +33,21 @@ function scrollToTop() {
 }
 
 function bindHomeScrollLinks(container) {
-  container.querySelectorAll('a[href="./index.html"]').forEach((link) => {
+  container.querySelectorAll('a[href="./index.html"], a[href="./index.html#contacto"]').forEach((link) => {
     link.addEventListener('click', (event) => {
       if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       const targetPath = new URL(link.href, window.location.href).pathname;
       if (!isHomePath(window.location.pathname) || !isHomePath(targetPath)) return;
       event.preventDefault();
       link.closest('dialog[open]')?.close();
+      if (new URL(link.href, window.location.href).hash === '#contacto') {
+        history.replaceState(history.state, '', window.location.pathname + window.location.search + '#contacto');
+        document.getElementById('contacto')?.scrollIntoView({
+          behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+          block: 'start',
+        });
+        return;
+      }
       scrollToTop();
     });
   });

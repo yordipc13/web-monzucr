@@ -18,6 +18,7 @@
       <a class="brand" href="../index.html">Administración</a>
       <div class="header-actions">
         <a class="back-link" href="../index.html">Volver al portafolio ↗</a>
+        <button id="change-password" class="quiet-button" type="button" hidden>Cambiar contraseña</button>
         <button id="sign-out" class="quiet-button" type="button" hidden>Cerrar sesión</button>
       </div>
     </div>
@@ -42,6 +43,7 @@
         </div>
         <button class="primary-button" type="submit">Iniciar sesión <span aria-hidden="true">→</span></button>
       </form>
+      <button id="login-change-password" class="quiet-button" type="button">Cambiar contraseña antes de entrar</button>
     </section>
 
     <section id="workspace" aria-labelledby="catalog-title" hidden>
@@ -67,6 +69,32 @@
       </div>
     </section>
   </main>
+
+  <dialog id="password-dialog" aria-labelledby="password-title">
+    <div class="dialog-header">
+      <div><h2 id="password-title">Cambiar contraseña</h2></div>
+      <button id="close-password" class="close-button" type="button" aria-label="Cerrar cambio de contraseña">×</button>
+    </div>
+    <form id="password-form" class="form-stack password-form">
+      <label>Correo electrónico
+        <input name="email" type="email" autocomplete="username" required hidden>
+      </label>
+      <label>Contraseña actual
+        <input name="current-password" type="password" autocomplete="current-password" required hidden>
+      </label>
+      <label>Nueva contraseña
+        <input name="password" type="password" autocomplete="new-password" minlength="6" required>
+      </label>
+      <label>Repetir contraseña
+        <input name="password-confirmation" type="password" autocomplete="new-password" minlength="6" required>
+      </label>
+      <p id="password-status" class="message" role="status" aria-live="polite"></p>
+      <div class="form-actions">
+        <button id="cancel-password" class="quiet-button" type="button">Cancelar</button>
+        <button id="save-password" class="primary-button" type="submit">Guardar contraseña</button>
+      </div>
+    </form>
+  </dialog>
 
   <dialog id="art-dialog" aria-labelledby="form-title">
     <div class="dialog-header">

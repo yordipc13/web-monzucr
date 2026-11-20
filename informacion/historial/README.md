@@ -27,3 +27,4 @@ La información histórica debe estar aquí y no mezclada con el código del sit
 - Se eliminó el punto decorativo de la marca en la barra superior.
 - La galería completa y su barra de filtros y columnas se muestran desde la primera carga de la página.
 - La entrada a la raíz conserva el scroll en la parte superior y la cuadrícula inicia por defecto con 4 columnas.
+- El enlace móvil de Contacto desplaza directamente al footer y las panorámicas adaptan su altura a la orientación del teléfono.

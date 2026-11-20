@@ -8,6 +8,11 @@ const passwordToggle = document.getElementById('toggle-password');
 const workspace = document.getElementById('workspace');
 const globalStatus = document.getElementById('global-status');
 const signOutButton = document.getElementById('sign-out');
+const changePasswordButton = document.getElementById('change-password');
+const loginChangePasswordButton = document.getElementById('login-change-password');
+const passwordDialog = document.getElementById('password-dialog');
+const passwordForm = document.getElementById('password-form');
+const passwordStatus = document.getElementById('password-status');
 const dialog = document.getElementById('art-dialog');
 const form = document.getElementById('art-form');
 const formStatus = document.getElementById('form-status');
@@ -29,6 +34,7 @@ let editorPublish = true;
 let selectedId = null;
 let workDrag = null;
 let suppressClickUntil = 0;
+let passwordChangeBeforeLogin = false;
 const coverUrls = new Set();
 
 function message(error) {
@@ -96,6 +102,7 @@ async function authorize() {
     setGlobalStatus('Esta cuenta no tiene permisos de administración. Cierra sesión para usar otra cuenta.');
     return;
   }
+  changePasswordButton.hidden = false;
   await loadCatalog();
   loginPanel.hidden = true;
   workspace.hidden = false;
@@ -663,10 +670,103 @@ signOutButton.addEventListener('click', async () => {
     requireSuccess(await supabase.auth.signOut());
     workspace.hidden = true;
     signOutButton.hidden = true;
+    changePasswordButton.hidden = true;
     loginPanel.hidden = false;
     setGlobalStatus('Sesión cerrada.');
   } catch (error) {
     setGlobalStatus(`No se pudo cerrar la sesión: ${message(error)}`, error);
+  }
+});
+function closePasswordDialog() {
+  passwordDialog.close();
+  passwordForm.reset();
+  passwordStatus.textContent = '';
+  setPasswordDialogMode(false);
+}
+
+function setPasswordDialogMode(beforeLogin) {
+  passwordChangeBeforeLogin = beforeLogin;
+  const emailInput = passwordForm.elements.email;
+  emailInput.hidden = !beforeLogin;
+  emailInput.closest('label').hidden = !beforeLogin;
+  emailInput.required = beforeLogin;
+  const currentPasswordInput = passwordForm.elements['current-password'];
+  currentPasswordInput.hidden = false;
+  currentPasswordInput.closest('label').hidden = false;
+  currentPasswordInput.required = true;
+  document.getElementById('save-password').textContent = beforeLogin
+    ? 'Actualizar y volver al acceso'
+    : 'Guardar contraseña';
+}
+
+function openPasswordDialog(beforeLogin) {
+  passwordForm.reset();
+  passwordStatus.textContent = '';
+  setPasswordDialogMode(beforeLogin);
+  if (beforeLogin) passwordForm.elements.email.value = loginForm.elements.email.value.trim();
+  passwordDialog.showModal();
+  passwordForm.elements[beforeLogin ? 'email' : 'current-password'].focus();
+}
+
+loginChangePasswordButton.addEventListener('click', () => openPasswordDialog(true));
+changePasswordButton.addEventListener('click', () => openPasswordDialog(false));
+
+document.getElementById('close-password').addEventListener('click', closePasswordDialog);
+document.getElementById('cancel-password').addEventListener('click', closePasswordDialog);
+passwordDialog.addEventListener('cancel', (event) => {
+  event.preventDefault();
+  closePasswordDialog();
+});
+passwordForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const password = passwordForm.elements.password.value;
+  if (password !== passwordForm.elements['password-confirmation'].value) {
+    passwordStatus.textContent = 'Las contraseñas no coinciden.';
+    passwordForm.elements['password-confirmation'].focus();
+    return;
+  }
+
+  const saveButton = document.getElementById('save-password');
+  saveButton.disabled = true;
+  passwordStatus.textContent = 'Actualizando contraseña…';
+  let temporarySession = false;
+  try {
+    let email;
+    if (passwordChangeBeforeLogin) {
+      email = passwordForm.elements.email.value.trim();
+    } else {
+      const { data, error } = await supabase.auth.getUser();
+      if (error) throw error;
+      email = data.user?.email;
+      if (!email) throw new Error('No se pudo obtener el correo de la sesión actual.');
+    }
+    requireSuccess(await supabase.auth.signInWithPassword({
+      email,
+      password: passwordForm.elements['current-password'].value,
+    }));
+    temporarySession = passwordChangeBeforeLogin;
+    requireSuccess(await supabase.auth.updateUser({ password }));
+    if (temporarySession) {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        passwordStatus.textContent = 'La contraseña se actualizó, pero no se pudo cerrar la sesión. Recarga el panel para continuar.';
+        return;
+      }
+      temporarySession = false;
+    }
+    passwordForm.reset();
+    passwordStatus.textContent = passwordChangeBeforeLogin
+      ? 'La contraseña se actualizó. Ya puedes iniciar sesión con la nueva.'
+      : 'La contraseña se actualizó correctamente.';
+  } catch (error) {
+    if (temporarySession) {
+      const { error: signOutError } = await supabase.auth.signOut();
+      if (signOutError) console.error('No se pudo cerrar la sesión temporal.', signOutError);
+    }
+    passwordStatus.textContent = `No se pudo actualizar la contraseña: ${message(error)}`;
+    console.error('No se pudo actualizar la contraseña.', error);
+  } finally {
+    saveButton.disabled = false;
   }
 });
 document.getElementById('search').addEventListener('input', renderCatalog);

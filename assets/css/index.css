@@ -282,6 +282,7 @@ h1, h2, p { margin-top: 0; }
   overflow-x: auto;
   overflow-y: hidden;
   pointer-events: auto;
+  touch-action: pan-x pan-y;
   overscroll-behavior-x: contain;
   scrollbar-width: thin;
   -webkit-overflow-scrolling: touch;
@@ -330,6 +331,11 @@ h1, h2, p { margin-top: 0; }
   .detail-previous { left: 4px; }
   .detail-next { right: 4px; }
   .detail-info { grid-template-columns: 1fr; gap: 20px; }
+  .detail-stage.is-panorama {
+    height: min(62svh, 520px);
+    min-height: 240px;
+    touch-action: pan-y;
+  }
 }
 
 @media (max-width: 440px) {
@@ -337,6 +343,13 @@ h1, h2, p { margin-top: 0; }
   .footer-contact { max-width: 360px; }
   .footer-contact-link { min-height: 64px; }
   .footer-link-value { font-size: 20px; }
+}
+
+@media (max-width: 700px) and (orientation: landscape) {
+  .detail-stage.is-panorama {
+    height: calc(100svh - 80px);
+    min-height: 220px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
