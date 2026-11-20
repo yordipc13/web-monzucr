@@ -10,10 +10,10 @@ const categoryId = params.get('category') || null;
 const source = params.get('from') === 'home' ? 'home' : 'gallery';
 const scope = params.get('scope') === 'work' ? 'work' : 'gallery';
 const back = document.getElementById('detail-back');
-const backUrl = new URL(source === 'home' ? './index.html' : './galeria.html', window.location.href);
+const backUrl = new URL(source === 'home' ? './index.html' : './index.html#galeria', window.location.href);
 if (source === 'gallery' && categoryId) backUrl.searchParams.set('category', categoryId);
 back.href = backUrl.href;
-back.querySelector('.detail-back-target').textContent = source === 'home' ? ' al inicio' : ' a la galería';
+back.querySelector('span').textContent = source === 'home' ? 'Volver al inicio' : 'Volver a la galería';
 
 const title = document.getElementById('detail-title');
 const track = document.getElementById('detail-track');

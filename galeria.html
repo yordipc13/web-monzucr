@@ -1,65 +1,15 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#faf9f7">
-  <meta name="description" content="Galería de obras de Gabriela Monzú.">
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="Gabriela Monzú">
-  <meta property="og:title" content="Galería | Gabriela Monzú">
-  <meta property="og:description" content="Obras, formas y detalles del portafolio.">
-  <meta property="og:url" content="./galeria.html">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Galería | Gabriela Monzú">
-  <meta name="twitter:description" content="Obras, formas y detalles del portafolio.">
-  <title>Galería | Gabriela Monzú</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/css/index.css">
-  <script type="module" src="/assets/js/gallery-page.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="refresh" content="0; url=./index.html#galeria">
+  <title>Galería · MONZÚ</title>
+  <script>
+    location.replace('./index.html' + location.search + '#galeria');
+  </script>
 </head>
 <body>
-  <a class="skip-link" href="#contenido">Saltar al contenido</a>
-  <noscript><p class="page-width">Activa JavaScript para explorar la galería.</p></noscript>
-  <div id="site-header"></div>
-  <main id="contenido" class="page-width">
-    <div class="gallery-page-heading">
-      <div>
-        <p class="eyebrow"><span class="eyebrow-line"></span> PORTAFOLIO</p>
-        <h1>La <em>galería.</em></h1>
-        <p class="section-description">Obras, formas y detalles.</p>
-      </div>
-      <svg class="gallery-extra-motif gallery-leaf-top" viewBox="0 0 180 180" aria-hidden="true" focusable="false">
-        <path d="M42 139c13-43 37-69 74-91M62 112c-8-20-3-38 15-54M88 88c18 5 34 0 48-15M111 67c-7-15-5-29 7-41M57 116c-17 2-29 10-36 24M60 128c22-7 43-4 62 10" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <svg class="gallery-extra-motif gallery-vessel-low" viewBox="0 0 180 180" aria-hidden="true" focusable="false">
-        <path d="M66 48c15-5 33-5 48 0l-4 17c-3 12-1 21 8 31l13 16c8 9 6 21-4 28-17 12-54 12-71 0-10-7-12-19-4-28l13-16c9-10 11-19 8-31l-7-17ZM66 48c15 6 33 6 48 0M68 65c13 5 31 5 44 0M58 112c21 9 43 9 64 0M52 140c24 13 51 13 76 0" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <svg class="gallery-motif" viewBox="0 0 360 280" aria-hidden="true" focusable="false">
-        <path class="motif-fill" d="M132 88c18-7 78-7 96 0l-7 25c-4 16-2 28 9 40l22 24c12 14 12 31-1 44-22 22-120 22-142 0-13-13-13-30-1-44l22-24c11-12 13-24 9-40l-7-25Z"/>
-        <path class="motif-line" d="M132 88c18 9 78 9 96 0M139 113c23 10 58 10 82 0M127 177c32 17 74 17 106 0M109 221c38 24 104 24 142 0"/>
-        <path class="motif-line" d="M158 88c-3-21 4-38 18-50M176 38c12 7 20 18 22 32M181 42c-15-8-27-5-36 7M191 55c15-8 29-7 39 4M201 61c-2 22-9 41-22 58"/>
-        <path class="motif-line motif-ember" d="M79 246c36-24 74-20 104 0 30 20 68 17 98-4M96 258c29-12 58-10 86 3M206 245c24-13 48-10 68 2"/>
-      </svg>
-    </div>
-    <div class="gallery-toolbar">
-      <div id="category-filters" class="category-filters" role="group" aria-label="Filtrar por categoría"></div>
-      <div data-grid-control></div>
-    </div>
-    <div id="gallery" class="masonry" aria-label="Galería de obras" aria-busy="true">
-      <div class="gallery-skeleton"></div><div class="gallery-skeleton"></div><div class="gallery-skeleton"></div><div class="gallery-skeleton"></div><div class="gallery-skeleton"></div><div class="gallery-skeleton"></div>
-    </div>
-    <p id="gallery-status" class="status-message" role="status"></p>
-    <div class="more-wrap gallery-load-more" id="gallery-more-wrap" hidden>
-      <button id="gallery-more" class="outline-button" type="button">Cargar más <span aria-hidden="true">↓</span></button>
-    </div>
-    <div id="gallery-sentinel" aria-hidden="true"></div>
-    <div class="more-wrap" style="margin-bottom: clamp(80px, 10vw, 150px)">
-      <a class="text-link" href="./index.html">← Volver a Inicio</a>
-    </div>
-  </main>
-  <div id="site-footer"></div>
+  <p><a href="./index.html#galeria">Ir a la galería</a></p>
 </body>
 </html>

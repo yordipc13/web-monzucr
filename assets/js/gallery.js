@@ -127,3 +127,30 @@ export async function initializeGalleryPage() {
   }
   await loadNext();
 }
+
+export function initializeHomeGallery() {
+  const expandButton = document.getElementById('gallery-expand');
+  const expandWrap = document.getElementById('gallery-expand-wrap');
+  const preview = document.getElementById('gallery-preview');
+  const full = document.getElementById('gallery-full');
+  const section = document.getElementById('galeria');
+  let started = false;
+
+  function showFullGallery({ scroll }) {
+    if (!started) {
+      started = true;
+      initializeGalleryPage();
+    }
+    preview.hidden = true;
+    expandWrap.hidden = true;
+    full.hidden = false;
+    if (window.location.hash !== '#galeria') history.replaceState(history.state, '', `${window.location.pathname}${window.location.search}#galeria`);
+    if (scroll) section.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+  }
+
+  expandButton.addEventListener('click', () => showFullGallery({ scroll: true }));
+  window.addEventListener('hashchange', () => {
+    if (window.location.hash === '#galeria') showFullGallery({ scroll: true });
+  });
+  if (window.location.hash === '#galeria') showFullGallery({ scroll: false });
+}

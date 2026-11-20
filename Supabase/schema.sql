@@ -14,6 +14,7 @@ create table public.monzu_artworks (
   category_id uuid references public.monzu_categories(id),
   description text not null default '',
   status text not null default 'draft' check (status in ('draft', 'published')),
+  sort_order integer not null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   check (status <> 'published' or category_id is not null)
@@ -38,7 +39,7 @@ create table public.monzu_featured (
   unique (slot, position)
 );
 
-create index monzu_artworks_published_order on public.monzu_artworks (created_at desc, id desc) where status = 'published';
+create index monzu_artworks_published_order on public.monzu_artworks (sort_order, created_at desc, id desc) where status = 'published';
 create index monzu_images_artwork_order on public.monzu_images (artwork_id, position);
 
 create function public.monzu_is_admin()
@@ -70,6 +71,21 @@ end;
 $$;
 create trigger monzu_check_publication before insert or update on public.monzu_artworks
 for each row execute function public.monzu_check_publication();
+
+create function public.monzu_assign_artwork_order()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if new.sort_order is null then
+    select coalesce(max(sort_order), 0) + 1 into new.sort_order from public.monzu_artworks;
+  end if;
+  return new;
+end;
+$$;
+create trigger monzu_assign_artwork_order before insert on public.monzu_artworks
+for each row execute function public.monzu_assign_artwork_order();
 
 create function public.monzu_preserve_published_image()
 returns trigger
@@ -117,6 +133,34 @@ end;
 $$;
 revoke all on function public.monzu_reorder_images(uuid, uuid[]) from public;
 grant execute on function public.monzu_reorder_images(uuid, uuid[]) to authenticated;
+
+create function public.monzu_reorder_artworks(p_artwork_ids uuid[])
+returns void
+language plpgsql
+set search_path = ''
+as $$
+declare
+  artwork_count integer;
+begin
+  if not public.monzu_is_admin() then
+    raise exception 'No autorizado';
+  end if;
+  select count(*) into artwork_count from public.monzu_artworks;
+  if cardinality(p_artwork_ids) <> artwork_count
+    or (select count(distinct value) from unnest(p_artwork_ids) as value) <> artwork_count
+    or exists (
+      select 1 from unnest(p_artwork_ids) as value
+      where not exists (select 1 from public.monzu_artworks where id = value)
+    ) then
+    raise exception 'La lista de obras no coincide con el catálogo';
+  end if;
+  update public.monzu_artworks
+    set sort_order = array_position(p_artwork_ids, id)
+    where id = any(p_artwork_ids);
+end;
+$$;
+revoke all on function public.monzu_reorder_artworks(uuid[]) from public;
+grant execute on function public.monzu_reorder_artworks(uuid[]) to authenticated;
 
 alter table public.monzu_admins enable row level security;
 alter table public.monzu_categories enable row level security;

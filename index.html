@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#faf9f7">
+  <meta name="theme-color" content="#ffffff">
   <meta name="description" content="Portafolio de Gabriela Monzú, artista de cerámica.">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Gabriela Monzú">
@@ -20,7 +20,7 @@
   <link rel="stylesheet" href="/assets/css/index.css">
   <script type="module" src="/assets/js/index.js"></script>
 </head>
-<body>
+<body class="home-page">
   <a class="skip-link" href="#contenido">Saltar al contenido</a>
   <noscript><p class="page-width">Activa JavaScript para explorar el portafolio y sus imágenes.</p></noscript>
   <div id="site-header"></div>
@@ -47,29 +47,31 @@
       <p class="status-message" data-carousel-status role="status"></p>
     </section>
 
-    <section class="gallery-section page-width" aria-labelledby="gallery-preview-title">
-      <svg class="page-motif motif-vessel-right" viewBox="0 0 180 180" aria-hidden="true" focusable="false">
-        <path d="M66 48c15-5 33-5 48 0l-4 17c-3 12-1 21 8 31l13 16c8 9 6 21-4 28-17 12-54 12-71 0-10-7-12-19-4-28l13-16c9-10 11-19 8-31l-7-17Z" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linejoin="round"/>
-        <path d="M66 48c15 6 33 6 48 0M68 65c13 5 31 5 44 0M58 112c21 9 43 9 64 0M52 140c24 13 51 13 76 0M73 38c5-12 17-18 31-14M104 24c7 6 9 12 7 19" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-      </svg>
-      <svg class="page-motif motif-horizontal-gallery" viewBox="0 0 520 220" aria-hidden="true" focusable="false">
-        <path d="M16 174c58 0 106-13 145-38c44-28 70-69 82-121M157 139c-20-21-42-34-67-40M241 55c-4-20-14-35-31-46M217 82c30-2 56-13 79-33M196 113c-24 8-43 21-57 39M256 70c38 6 70 21 97 45M314 108c23-12 42-29 56-51M380 144c32-2 60-13 84-34" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M90 99c-9-19-5-35 11-48c12 15 8 31-11 48ZM143 51c18-13 35-14 51-2c-17 12-34 13-51 2ZM296 115c17-16 35-18 53-6c-15 15-33 17-53 6ZM367 58c19-7 36-5 51 7c-18 8-35 5-51-7ZM139 152c18 1 32 8 43 20c-18 7-32 0-43-20ZM464 111c16-12 32-14 48-6c-13 13-29 15-48 6Z" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M352 88c-10 20-13 39-9 58M406 155c-18 7-34 18-47 33" fill="none" stroke="currentColor" stroke-width="2.7" stroke-linecap="round"/>
-      </svg>
+    <section class="gallery-section page-width" id="galeria" aria-labelledby="gallery-preview-title">
       <div class="gallery-heading">
         <div>
           <p class="eyebrow"><span class="eyebrow-line"></span> EXPLORAR</p>
           <h2 id="gallery-preview-title">La <em>galería.</em></h2>
           <p class="section-description">Una selección de obras y sus detalles.</p>
         </div>
-        <div data-grid-control></div>
       </div>
       <div id="gallery-preview" class="masonry" aria-label="Vista previa de la galería" aria-busy="true">
         <div class="gallery-skeleton"></div><div class="gallery-skeleton"></div><div class="gallery-skeleton"></div><div class="gallery-skeleton"></div><div class="gallery-skeleton"></div><div class="gallery-skeleton"></div>
       </div>
       <p id="gallery-preview-status" class="status-message" role="status"></p>
-      <div class="more-wrap"><a class="outline-button" href="./galeria.html">Ver más <span aria-hidden="true">↗</span></a></div>
+      <div class="more-wrap gallery-expand-wrap" id="gallery-expand-wrap"><button id="gallery-expand" class="outline-button" type="button">Ver más <span aria-hidden="true">↓</span></button></div>
+      <div id="gallery-full" class="gallery-full" hidden>
+        <div class="gallery-toolbar">
+          <div id="category-filters" class="category-filters" role="group" aria-label="Filtrar por categoría"></div>
+          <div data-grid-control></div>
+        </div>
+        <div id="gallery" class="masonry" aria-label="Galería de obras" aria-busy="true"></div>
+        <p id="gallery-status" class="status-message" role="status"></p>
+        <div class="more-wrap gallery-load-more" id="gallery-more-wrap" hidden>
+          <button id="gallery-more" class="outline-button" type="button">Cargar más <span aria-hidden="true">↓</span></button>
+        </div>
+        <div id="gallery-sentinel" aria-hidden="true"></div>
+      </div>
     </section>
   </main>
   <div id="site-footer"></div>

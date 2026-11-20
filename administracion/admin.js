@@ -26,6 +26,9 @@ let deleting = false;
 let menuWork = null;
 let menuTrigger = null;
 let editorPublish = true;
+let selectedId = null;
+let workDrag = null;
+let suppressClickUntil = 0;
 const coverUrls = new Set();
 
 function message(error) {
@@ -104,6 +107,7 @@ async function loadCatalog() {
     supabase.from('monzu_categories').select('id,name').order('name'),
     supabase.from('monzu_artworks')
       .select('id,name,description,status,category_id,created_at,category:monzu_categories(name),images:monzu_images(id,position,storage_path,width,height,alt),featured:monzu_featured(slot,position)')
+      .order('sort_order', { ascending: true })
       .order('created_at', { ascending: false }).order('id', { ascending: false }),
   ]);
   categories = requireSuccess(categoryResult);
@@ -131,6 +135,7 @@ function renderCatalog() {
       const cover = document.createElement('img');
       cover.alt = `Fotografía de ${work.name}`;
       cover.loading = 'lazy';
+      cover.draggable = false;
       cover.addEventListener('error', () => setGlobalStatus(`No se pudo cargar la portada de ${work.name}.`), { once: true });
       photo.append(cover);
       loadCover(cover, work);
@@ -162,13 +167,20 @@ function renderCatalog() {
       openMenu(work, options, rect.right, rect.bottom);
     });
     card.tabIndex = 0;
+    card.dataset.id = work.id;
+    card.classList.toggle('is-selected', work.id === selectedId);
     card.addEventListener('click', (event) => {
+      if (event.target.closest('.work-options') || performance.now() < suppressClickUntil) return;
+      selectWork(work.id);
+    });
+    card.addEventListener('dblclick', (event) => {
       if (event.target.closest('.work-options')) return;
       openEditor(work);
     });
     card.addEventListener('keydown', (event) => {
       if (event.key === 'Enter' && event.target === card) openEditor(work);
     });
+    card.addEventListener('pointerdown', (event) => startDrag(event, card));
     card.addEventListener('contextmenu', (event) => {
       event.preventDefault();
       openMenu(work, options, event.clientX, event.clientY);
@@ -184,6 +196,89 @@ function renderCatalog() {
   const empty = document.getElementById('catalog-empty');
   empty.hidden = filtered.length !== 0;
   empty.textContent = term ? 'No hay obras que coincidan con la búsqueda.' : 'Todavía no hay obras en el catálogo.';
+}
+
+function isSearching() {
+  return document.getElementById('search').value.trim() !== '';
+}
+
+function selectWork(id) {
+  selectedId = id;
+  document.querySelectorAll('#catalog-grid .work-card').forEach((card) => {
+    card.classList.toggle('is-selected', card.dataset.id === id);
+  });
+}
+
+function columnCount() {
+  const template = getComputedStyle(document.getElementById('catalog-grid')).gridTemplateColumns;
+  return Math.max(1, template.split(' ').length);
+}
+
+function moveWorkOrder(fromIndex, toIndex) {
+  const next = [...works];
+  const [moved] = next.splice(fromIndex, 1);
+  next.splice(toIndex, 0, moved);
+  return next;
+}
+
+async function persistWorkOrder(previous) {
+  setGlobalStatus('Guardando el orden de las obras…');
+  const result = await supabase.rpc('monzu_reorder_artworks', { p_artwork_ids: works.map((work) => work.id) });
+  if (result.error) {
+    works = previous;
+    renderCatalog();
+    setGlobalStatus(`No se pudo guardar el orden: ${message(result.error)}`, result.error);
+    return;
+  }
+  setGlobalStatus('');
+}
+
+function reorderWorks(nextWorks) {
+  const previous = works;
+  works = nextWorks;
+  renderCatalog();
+  persistWorkOrder(previous);
+}
+
+function moveSelectedBy(delta) {
+  if (isSearching()) {
+    setGlobalStatus('Borra la búsqueda para reordenar las obras.');
+    return;
+  }
+  const from = works.findIndex((work) => work.id === selectedId);
+  const to = Math.min(works.length - 1, Math.max(0, from + delta));
+  if (from < 0 || to === from) return;
+  reorderWorks(moveWorkOrder(from, to));
+  const card = document.querySelector(`#catalog-grid .work-card[data-id="${selectedId}"]`);
+  card?.scrollIntoView({ block: 'nearest' });
+  card?.focus({ preventScroll: true });
+}
+
+function cardAt(x, y) {
+  return [...document.querySelectorAll('#catalog-grid .work-card')].find((card) => {
+    const rect = card.getBoundingClientRect();
+    return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+  }) || null;
+}
+
+function startDrag(event, card) {
+  if (event.button !== 0 || event.target.closest('.work-options') || isSearching()) return;
+  workDrag = {
+    card,
+    id: card.dataset.id,
+    pointerId: event.pointerId,
+    startX: event.clientX,
+    startY: event.clientY,
+    active: false,
+    targetId: null,
+  };
+}
+
+function clearWorkDrag() {
+  if (!workDrag) return;
+  workDrag.card.classList.remove('is-dragging');
+  document.querySelectorAll('#catalog-grid .drop-target').forEach((el) => el.classList.remove('drop-target'));
+  workDrag = null;
 }
 
 function closeMenu(restoreFocus = false) {
@@ -590,6 +685,44 @@ document.addEventListener('keydown', (event) => {
 });
 window.addEventListener('resize', () => closeMenu());
 window.addEventListener('scroll', () => closeMenu(), { passive: true });
+document.addEventListener('keydown', (event) => {
+  if (!selectedId || dialog.open || !menu.hidden || workspace.hidden) return;
+  if (event.target instanceof Element && event.target.closest('input, textarea, select, [contenteditable]')) return;
+  const deltas = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -columnCount(), ArrowDown: columnCount() };
+  const delta = deltas[event.key];
+  if (delta === undefined) return;
+  event.preventDefault();
+  moveSelectedBy(delta);
+});
+document.addEventListener('pointermove', (event) => {
+  if (!workDrag || event.pointerId !== workDrag.pointerId) return;
+  if (!workDrag.active) {
+    if (Math.hypot(event.clientX - workDrag.startX, event.clientY - workDrag.startY) < 8) return;
+    workDrag.active = true;
+    workDrag.card.classList.add('is-dragging');
+  }
+  const target = cardAt(event.clientX, event.clientY);
+  const targetId = target?.dataset.id ?? null;
+  if (targetId === workDrag.targetId) return;
+  document.querySelectorAll('#catalog-grid .drop-target').forEach((el) => el.classList.remove('drop-target'));
+  workDrag.targetId = targetId;
+  if (targetId && targetId !== workDrag.id) target.classList.add('drop-target');
+});
+document.addEventListener('pointerup', (event) => {
+  if (!workDrag || event.pointerId !== workDrag.pointerId) return;
+  const { id, active, targetId } = workDrag;
+  clearWorkDrag();
+  if (!active) return;
+  suppressClickUntil = performance.now() + 300;
+  const from = works.findIndex((work) => work.id === id);
+  const to = works.findIndex((work) => work.id === targetId);
+  if (from < 0 || to < 0 || from === to) return;
+  selectWork(id);
+  reorderWorks(moveWorkOrder(from, to));
+});
+document.addEventListener('pointercancel', (event) => {
+  if (workDrag && event.pointerId === workDrag.pointerId) clearWorkDrag();
+});
 document.getElementById('close-form').addEventListener('click', closeEditor);
 document.getElementById('cancel-form').addEventListener('click', closeEditor);
 dialog.addEventListener('cancel', (event) => { event.preventDefault(); closeEditor(); });

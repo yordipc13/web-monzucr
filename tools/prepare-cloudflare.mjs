@@ -11,7 +11,7 @@ const files = [
   ['galeria.html', 'galeria.html'],
   ['obra.html', 'obra.html'],
   [path.join('assets', 'css', 'index.css'), path.join('assets', 'css', 'index.css')],
-  ...['catalog.js', 'gallery-navigation.js', 'gallery.js', 'gallery-page.js', 'index.js', 'obra.js', 'site-config.js', 'site.js', 'supabase-catalog.js']
+  ...['catalog.js', 'gallery-navigation.js', 'gallery.js', 'index.js', 'obra.js', 'site-config.js', 'site.js', 'supabase-catalog.js']
     .map((name) => [path.join('assets', 'js', name), path.join('assets', 'js', name)]),
   ...[
     path.join('administracion', 'admin.html'),

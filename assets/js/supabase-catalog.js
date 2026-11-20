@@ -44,6 +44,7 @@ export async function getHomeWorks() {
   const { data, error } = await supabase.from('monzu_artworks')
     .select(artworkFields)
     .eq('status', 'published')
+    .order('sort_order', { ascending: true })
     .order('created_at', { ascending: false })
     .order('id', { ascending: false });
   if (error) throw error;
@@ -64,6 +65,7 @@ export async function getGalleryPage({ offset, limit, categoryId }) {
   let query = supabase.from('monzu_artworks')
     .select(artworkFields)
     .eq('status', 'published')
+    .order('sort_order', { ascending: true })
     .order('created_at', { ascending: false })
     .order('id', { ascending: false })
     .range(offset, offset + limit);
