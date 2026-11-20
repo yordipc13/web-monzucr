@@ -26,6 +26,7 @@ const description = document.getElementById('detail-description');
 let loading = false;
 let sequence = null;
 let currentIndex = 0;
+let isPanoramic = false;
 let controlsRun = 0;
 const slideCache = new Map();
 const stage = document.querySelector('.detail-stage');
@@ -180,6 +181,15 @@ stage.addEventListener('wheel', (event) => {
 
 async function updateControls() {
   const run = ++controlsRun;
+  if (isPanoramic) {
+    previous.hidden = true;
+    next.hidden = true;
+    previous.disabled = true;
+    next.disabled = true;
+    return;
+  }
+  previous.hidden = false;
+  next.hidden = false;
   previous.disabled = loading || currentIndex <= 0;
   if (loading || !sequence) {
     next.disabled = true;
@@ -225,6 +235,26 @@ async function createSlide(item, key) {
     if (slide.dataset.position === 'next' && !next.disabled) move(1);
   });
   return slide;
+}
+
+async function renderPanorama(work) {
+  stage.classList.add('is-panorama');
+  previous.hidden = true;
+  next.hidden = true;
+  previous.disabled = true;
+  next.disabled = true;
+  track.replaceChildren();
+  status.textContent = 'Cargando panorámica…';
+  const slides = await Promise.all(work.images.map((photo, index) => createSlide(
+    { work, photo, photoIndex: index },
+    'panorama-' + index,
+  )));
+  slides.forEach((slide) => {
+    slide.dataset.position = 'panorama';
+    slide.setAttribute('aria-hidden', 'false');
+    track.append(slide);
+  });
+  status.textContent = '';
 }
 
 async function loadSlide(index, key) {
@@ -378,19 +408,28 @@ async function initialize() {
     if (!workId || !Number.isSafeInteger(photoIndex) || photoIndex < 0 || (photoParam !== null && !/^\d+$/.test(photoParam))) {
       throw new Error('El enlace de la fotografía no es válido.');
     }
+    let initialItem;
     if (scope === 'work') {
       const loaded = await getArtworkById(workId);
       if (!loaded || !loaded.images?.length) throw new Error('La obra no existe o no tiene fotografías.');
       if (photoIndex >= loaded.images.length) throw new Error('La fotografía solicitada no existe en esta obra.');
       sequence = createWorkSequence(loaded);
       currentIndex = photoIndex;
+      initialItem = await sequence.at(currentIndex);
     } else {
       sequence = createGalleryNavigator(getGalleryPage, categoryId);
       await sequence.find(workId, photoIndex);
       currentIndex = sequence.position;
+      initialItem = await sequence.at(currentIndex);
+    }
+    isPanoramic = initialItem.work.isPanoramic === true;
+    if (isPanoramic) {
+      renderDetails(initialItem);
+      await renderPanorama(initialItem.work);
+      return;
     }
     const entries = await prepareWindow(currentIndex);
-    renderDetails(await sequence.at(currentIndex));
+    renderDetails(initialItem);
     syncSlides(entries);
     await updateControls();
   } catch (error) {

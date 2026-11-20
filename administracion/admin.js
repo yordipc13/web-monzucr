@@ -106,7 +106,7 @@ async function loadCatalog() {
   const [categoryResult, workResult] = await Promise.all([
     supabase.from('monzu_categories').select('id,name').order('name'),
     supabase.from('monzu_artworks')
-      .select('id,name,description,status,category_id,created_at,category:monzu_categories(name),images:monzu_images(id,position,storage_path,width,height,alt),featured:monzu_featured(slot,position)')
+      .select('id,name,description,is_panoramic,status,category_id,created_at,category:monzu_categories(name),images:monzu_images(id,position,storage_path,width,height,alt),featured:monzu_featured(slot,position)')
       .order('sort_order', { ascending: true })
       .order('created_at', { ascending: false }).order('id', { ascending: false }),
   ]);
@@ -328,6 +328,7 @@ async function openEditor(work = null) {
     document.getElementById('form-title').textContent = work ? 'Editar obra' : 'Agregar obra';
     form.elements.name.value = work?.name || '';
     form.elements.description.value = work?.description || '';
+    form.elements.is_panoramic.checked = work?.is_panoramic || false;
     editorPublish = !work || work.status === 'published';
     const categorySelect = form.elements.category;
     categorySelect.replaceChildren(new Option('Sin categoría', ''));
@@ -491,7 +492,12 @@ async function saveWork(event) {
   setFormStatus('Guardando obra…');
   let workId = editingId;
   try {
-    const payload = { name, category_id: categoryId, description: form.elements.description.value.trim() };
+    const payload = {
+      name,
+      category_id: categoryId,
+      description: form.elements.description.value.trim(),
+      is_panoramic: form.elements.is_panoramic.checked,
+    };
     if (workId) {
       requireSuccess(await supabase.from('monzu_artworks').update(payload).eq('id', workId).select('id').single());
     } else {

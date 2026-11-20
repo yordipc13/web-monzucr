@@ -49,4 +49,7 @@ test('la paginación respeta límite, desplazamiento y categoría', () => {
   assert.equal(second.items.length, 6);
   assert.equal(second.hasMore, false);
   assert.equal(paginateDemo(works, 0, 24, 'a').items.length, 15);
+  const covers = paginateDemo(works, 0, 24, 'a', true);
+  assert.equal(covers.items.length, 15);
+  assert.ok(covers.items.every(({ photoIndex }) => photoIndex === 0));
 });

@@ -17,6 +17,7 @@ export const demoWorks = demoImageDimensions.map((dimensions, groupIndex) => {
     category: null,
     categoryId: null,
     description: '',
+    isPanoramic: false,
     createdAt: null,
     images: dimensions.map(([width, height], imageIndex) => {
       const number = String(imageIndex + 1).padStart(2, '0');
@@ -73,20 +74,23 @@ export async function getArtworkById(id) {
   return (await getRemoteCatalog()).getArtworkById(id);
 }
 
-export function paginateDemo(works, offset, limit, categoryId = null) {
+export function paginateDemo(works, offset, limit, categoryId = null, coverOnly = false) {
   const items = works
     .filter((work) => !categoryId || work.categoryId === categoryId)
-    .flatMap((work) => work.images.map((photo, photoIndex) => ({ work, photo, photoIndex })));
+    .flatMap((work) => {
+      const images = coverOnly ? work.images.slice(0, 1) : work.images;
+      return images.map((photo, photoIndex) => ({ work, photo, photoIndex }));
+    });
   return {
     items: items.slice(offset, offset + limit),
     hasMore: offset + limit < items.length,
   };
 }
 
-export async function getGalleryPage({ offset = 0, limit = 12, categoryId = null } = {}) {
+export async function getGalleryPage({ offset = 0, limit = 12, categoryId = null, coverOnly = false } = {}) {
   if (siteConfig.catalogSource === 'demo') {
-    const page = paginateDemo([...demoWorks].reverse(), offset, limit, categoryId);
+    const page = paginateDemo([...demoWorks].reverse(), offset, limit, categoryId, coverOnly);
     return { ...page, nextOffset: offset + page.items.length };
   }
-  return (await getRemoteCatalog()).getGalleryPage({ offset, limit, categoryId });
+  return (await getRemoteCatalog()).getGalleryPage({ offset, limit, categoryId, coverOnly });
 }

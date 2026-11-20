@@ -1,13 +1,14 @@
 import { supabase } from '../../Supabase/supabaseClient.js';
 
 const bucket = supabase.storage.from('monzu-artwork-images');
-const artworkFields = 'id,name,description,created_at,category_id,category:monzu_categories(name),images:monzu_images(id,position,storage_path,width,height,alt)';
+const artworkFields = 'id,name,description,is_panoramic,created_at,category_id,category:monzu_categories(name),images:monzu_images(id,position,storage_path,width,height,alt)';
 
 function hydrateWorks(rows) {
   return rows.map((row) => ({
     id: row.id,
     name: row.name,
     description: row.description,
+    isPanoramic: row.is_panoramic || false,
     categoryId: row.category_id,
     category: row.category?.name || null,
     createdAt: row.created_at,
@@ -61,7 +62,7 @@ export async function getArtworkById(id) {
   return (await hydrateWorks([data]))[0];
 }
 
-export async function getGalleryPage({ offset, limit, categoryId }) {
+export async function getGalleryPage({ offset, limit, categoryId, coverOnly = false }) {
   let query = supabase.from('monzu_artworks')
     .select(artworkFields)
     .eq('status', 'published')
@@ -77,7 +78,8 @@ export async function getGalleryPage({ offset, limit, categoryId }) {
   return {
     items: works.flatMap((work) => {
       if (!work.images.length) throw new Error(`La obra ${work.name} no tiene imágenes.`);
-      return work.images.map((photo, photoIndex) => ({ work, photo, photoIndex }));
+      const images = coverOnly ? work.images.slice(0, 1) : work.images;
+      return images.map((photo, photoIndex) => ({ work, photo, photoIndex }));
     }),
     hasMore: data.length > limit,
     nextOffset: offset + pageRows.length,

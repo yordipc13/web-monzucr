@@ -13,6 +13,7 @@ create table public.monzu_artworks (
   name text not null check (length(trim(name)) > 0),
   category_id uuid references public.monzu_categories(id),
   description text not null default '',
+  is_panoramic boolean not null default false,
   status text not null default 'draft' check (status in ('draft', 'published')),
   sort_order integer not null,
   created_at timestamptz not null default now(),

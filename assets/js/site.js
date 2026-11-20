@@ -168,21 +168,16 @@ export function initializeSite() {
       </div>
       <nav class="menu-nav" aria-label="Navegación principal">
         <a href="./index.html">Inicio <small>01</small></a>
-        <button type="button" disabled>Instalaciones <small>Próximamente</small></button>
-        <button type="button" disabled>Info <small>Próximamente</small></button>
-        <button type="button" disabled>Contacto <small>Próximamente</small></button>
+        <a href="./index.html?category=Instalaciones#galeria">Instalaciones <small>02</small></a>
+        <a href="./index.html#galeria">Galería <small>03</small></a>
+        <a href="./index.html#contacto">Contacto <small>04</small></a>
       </nav>
       <p class="drawer-note">Gabriela Monzú · Portafolio</p>
     </dialog>`;
   footer.innerHTML = `
-    <footer class="site-footer" aria-labelledby="footer-heading">
-      <div class="page-width footer-inner">
+    <footer class="site-footer" aria-label="Contacto y navegación">
+      <div class="page-width footer-inner" id="contacto">
         <div class="footer-main">
-          <div class="footer-intro">
-            <p class="eyebrow"><span class="eyebrow-line"></span> HABLEMOS</p>
-            <h2 class="footer-heading" id="footer-heading">Sigamos en <em>contacto.</em></h2>
-            <a class="footer-brand" href="./index.html" aria-label="Gabriela Monzú, inicio">Gabriela Monzú<span>.</span></a>
-          </div>
           <nav class="footer-navigation" aria-label="Navegación del pie de página">
             <p class="footer-column-title">Explorar</p>
             <a href="./index.html"><span>Inicio</span><span class="footer-nav-number" aria-hidden="true">01</span></a>
@@ -204,6 +199,17 @@ export function initializeSite() {
               </span></span>
               <span class="footer-link-arrow" aria-hidden="true">↗</span>
             </a>
+            <a class="footer-contact-link" href="https://www.instagram.com/monzucr?cnvx=MXUyOTU5OWJ2NHRzMg%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer">
+              <span class="footer-link-copy"><span class="footer-link-label">Instagram</span><span class="footer-instagram-value">
+                <svg class="footer-instagram-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/>
+                  <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/>
+                  <circle cx="17.25" cy="6.75" r="1.25" fill="currentColor"/>
+                </svg>
+                <span class="footer-link-value">@monzucr</span>
+              </span></span>
+              <span class="footer-link-arrow" aria-hidden="true">↗</span>
+            </a>
           </div>
         </div>
         <div class="footer-bottom">
@@ -218,6 +224,7 @@ export function initializeSite() {
   const menu = document.getElementById('menu-dialog');
   header.querySelector('.menu-trigger').addEventListener('click', () => menu.showModal());
   menu.querySelector('.menu-close').addEventListener('click', () => menu.close());
+  menu.querySelectorAll('a[href]').forEach((link) => link.addEventListener('click', () => menu.close()));
   menu.addEventListener('click', (event) => {
     if (event.target === menu) menu.close();
   });
