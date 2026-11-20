@@ -152,7 +152,7 @@ export function initializeSite() {
   header.innerHTML = `
     <header class="site-header">
       <div class="page-width header-inner">
-        <a class="brand" href="./index.html" aria-label="Gabriela Monzú, inicio"><span class="brand-name">GABRIELA MONZÚ</span><span class="brand-mark" aria-hidden="true">.</span></a>
+        <a class="brand" href="./index.html" aria-label="Gabriela Monzú, inicio"><span class="brand-name">GABRIELA MONZÚ</span></a>
         <div class="header-actions">
           <button class="menu-trigger" type="button" aria-haspopup="dialog" aria-controls="menu-dialog">
             Menú <span class="menu-lines" aria-hidden="true"></span>

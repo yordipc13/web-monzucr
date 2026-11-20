@@ -24,3 +24,4 @@ La información histórica debe estar aquí y no mezclada con el código del sit
 - El filtro «Instalaciones» muestra una sola portada por obra y conserva la relación de aspecto original de cada imagen.
 - La galería muestra en cada portada la cantidad total de imágenes de su obra.
 - El indicador de cantidad se oculta al seleccionar el filtro «Todas» y se conserva para «Instalaciones».
+- Se eliminó el punto decorativo de la marca en la barra superior.
